@@ -1,0 +1,16 @@
+services:
+  app:
+    build: .
+    env_file:
+      - .env
+    volumes:
+      - ./src:/app/src
+    command: npx ts-node src/index.ts
+
+  # 本番用（ビルド済みJSを実行）
+  app-prod:
+    build: .
+    env_file:
+      - .env
+    profiles:
+      - prod

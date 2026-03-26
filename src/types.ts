@@ -14,17 +14,3 @@ export type Article = {
   lang: 'en' | 'ja';
   category?: Category;
 };
-
-export type CategoryConfig = {
-  key: Category;
-  emoji: string;
-  label: string;
-};
-
-export const CATEGORIES: CategoryConfig[] = [
-  { key: 'x_trending', emoji: '🔥', label: 'Xで話題' },
-  { key: 'anthropic', emoji: '🟠', label: 'Anthropic' },
-  { key: 'model_tech', emoji: '🧠', label: 'モデル・技術' },
-  { key: 'blog_ja', emoji: '📝', label: 'ブログ記事' },
-  { key: 'other', emoji: '💬', label: 'その他話題のニュース' },
-];

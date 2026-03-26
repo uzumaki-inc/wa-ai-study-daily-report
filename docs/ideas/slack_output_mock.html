@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Slack投稿イメージ — 2026/03/26</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans JP', sans-serif;
+    background: #1a1d21; color: #d1d2d3;
+    display: flex; justify-content: center; padding: 40px 20px;
+  }
+  .container { max-width: 780px; width: 100%; }
+  .mock-label {
+    color: #9a9b9d; font-size: 11px; text-transform: uppercase;
+    letter-spacing: 1px; margin-bottom: 16px; padding-bottom: 6px;
+    border-bottom: 1px solid #35373b;
+  }
+
+  /* Slack chrome */
+  .slack-msg { display: flex; gap: 12px; padding: 12px 0; }
+  .avatar {
+    width: 36px; height: 36px; border-radius: 6px; background: #4a154b;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; flex-shrink: 0;
+  }
+  .msg-content { flex: 1; }
+  .msg-header { display: flex; align-items: baseline; gap: 8px; margin-bottom: 6px; }
+  .bot-name { font-weight: 900; color: #fff; font-size: 15px; }
+  .bot-badge { background: #9a9b9d33; color: #9a9b9d; font-size: 10px; padding: 1px 4px; border-radius: 3px; font-weight: 600; }
+  .msg-time { color: #9a9b9d; font-size: 12px; }
+  .msg-body { font-size: 15px; line-height: 1.65; color: #d1d2d3; }
+  .header-line { font-size: 18px; font-weight: 700; color: #fff; margin-bottom: 4px; display: block; }
+  .date-sub { font-size: 13px; color: #9a9b9d; margin-bottom: 16px; display: block; }
+
+  /* Category */
+  .cat { font-weight: 700; font-size: 15px; margin: 20px 0 10px 0; }
+  .cat-x { color: #1d9bd1; }
+  .cat-anthropic { color: #d4a574; }
+  .cat-model { color: #e8912d; }
+  .cat-blog { color: #2de88e; }
+  .cat-other { color: #b49adb; }
+
+  /* News item */
+  .news-item { margin-bottom: 12px; padding-left: 20px; }
+  .news-title { font-weight: 700; color: #e8e8e8; font-size: 14px; }
+  .news-summary { color: #b5b6b8; margin-top: 2px; font-size: 14px; }
+  .news-meta { margin-top: 3px; display: flex; align-items: center; gap: 10px; }
+  .news-link { color: #1d9bd1; text-decoration: none; font-size: 13px; }
+  .news-link:hover { text-decoration: underline; }
+  .ja-link {
+    color: #2de88e; text-decoration: none; font-size: 12px;
+    background: #2de88e18; border: 1px solid #2de88e33;
+    border-radius: 4px; padding: 1px 6px;
+  }
+  .ja-link:hover { background: #2de88e33; }
+
+  /* "もっと見る" button */
+  .more-link {
+    display: inline-block; margin: 4px 0 6px 20px;
+    color: #1d9bd1; font-size: 13px; text-decoration: none;
+    cursor: pointer; padding: 3px 10px;
+    border: 1px solid #1d9bd133; border-radius: 6px;
+    background: #1d9bd10d;
+    transition: background 0.15s;
+  }
+  .more-link:hover { background: #1d9bd122; }
+
+  .divider { border: none; border-top: 1px solid #35373b; margin: 18px 0; }
+  .footer { color: #9a9b9d; font-size: 12px; }
+  .reactions { margin-top: 8px; display: flex; gap: 6px; }
+  .reaction {
+    background: #1d9bd122; border: 1px solid #1d9bd144;
+    border-radius: 12px; padding: 2px 8px; font-size: 12px;
+    display: flex; align-items: center; gap: 4px;
+  }
+
+  /* ===== Modal (もっと見る web view) ===== */
+  .modal-overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,0.75); z-index: 100;
+    justify-content: center; align-items: flex-start;
+    padding: 40px 20px; overflow-y: auto;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: #222529; border-radius: 12px; max-width: 720px; width: 100%;
+    padding: 32px; position: relative;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+  }
+  .modal-close {
+    position: absolute; top: 12px; right: 16px;
+    background: none; border: none; color: #9a9b9d; font-size: 22px;
+    cursor: pointer;
+  }
+  .modal-close:hover { color: #fff; }
+  .modal h2 { color: #fff; font-size: 18px; margin-bottom: 4px; }
+  .modal .modal-sub { color: #9a9b9d; font-size: 13px; margin-bottom: 20px; }
+  .modal .m-item {
+    padding: 12px 0; border-bottom: 1px solid #35373b;
+  }
+  .modal .m-item:last-child { border-bottom: none; }
+  .modal .m-rank {
+    color: #9a9b9d; font-size: 12px; font-weight: 700; margin-bottom: 2px;
+  }
+  .modal .m-title { font-weight: 700; color: #e8e8e8; font-size: 14px; }
+  .modal .m-summary { color: #b5b6b8; font-size: 13px; margin-top: 3px; }
+  .modal .m-meta { margin-top: 4px; display: flex; align-items: center; gap: 10px; }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="mock-label">Slack 投稿イメージ — 2026/03/26 実データ版（各カテゴリ2件 +「もっと見る」）</div>
+
+  <div class="slack-msg">
+    <div class="avatar">📰</div>
+    <div class="msg-content">
+      <div class="msg-header">
+        <span class="bot-name">AI News Bot</span>
+        <span class="bot-badge">APP</span>
+        <span class="msg-time">9:00 AM</span>
+      </div>
+      <div class="msg-body">
+        <span class="header-line">📰 今日のAIニュース</span>
+        <span class="date-sub">2026年3月26日（水）｜ 各カテゴリ厳選 2 件</span>
+
+        <!-- ===== Xで話題 ===== -->
+        <div class="cat cat-x">🔥 Xで話題</div>
+        <div class="news-item">
+          <div class="news-title">OpenClaw が史上最速のOSSプロジェクトに — 「次のChatGPT」としてX上で爆発的拡散</div>
+          <div class="news-summary">個人開発者が作ったオープンソースAIエージェントがローカルPCで完全自律動作。クラウドAPI不要の手軽さがバズの要因。</div>
+          <div class="news-meta">
+            <a class="news-link" href="https://www.cnbc.com/2026/03/21/openclaw-chatgpt-moment-sparks-concern-ai-models-becoming-commodities.html">cnbc.com</a>
+            <a class="ja-link" href="https://translate.google.com/translate?sl=en&tl=ja&u=https://www.cnbc.com/2026/03/21/openclaw-chatgpt-moment-sparks-concern-ai-models-becoming-commodities.html">🇯🇵 日本語で読む</a>
+          </div>
+        </div>
+        <div class="news-item">
+          <div class="news-title">米AI Accountability Act 成立 — 採用・融資・医療AIにバイアス監査を義務化</div>
+          <div class="news-summary">AI活用企業に定期的なバイアス監査と結果公開を義務付ける法案が米国で成立。X上で賛否両論の議論に。</div>
+          <div class="news-meta">
+            <a class="news-link" href="https://theaitrack.com/ai-news-march-2026-in-depth-and-concise/">theaitrack.com</a>
+            <a class="ja-link" href="https://translate.google.com/translate?sl=en&tl=ja&u=https://theaitrack.com/ai-news-march-2026-in-depth-and-concise/">🇯🇵 日本語で読む</a>
+          </div>
+        </div>
+        <a class="more-link" onclick="openModal('x')">＋ もっと見る（10件）</a>
+
+        <!-- ===== Anthropic ===== -->
+        <div class="cat cat-anthropic">🟠 Anthropic</div>
+        <div class="news-item">
+          <div class="news-title">Anthropic vs 米国防総省 — 連邦裁判所で公聴会、判事が政府側に疑問を呈す</div>
+          <div class="news-summary">自律兵器ガードレール撤去拒否に端を発した「国家安全保障リスク」指定訴訟。Rita Lin判事は政府の主張を「troubling」と評した。</div>
+          <div class="news-meta">
+            <a class="news-link" href="https://www.axios.com/2026/03/24/judge-pentagon-anthropic-troubling">axios.com</a>
+            <a class="ja-link" href="https://translate.google.com/translate?sl=en&tl=ja&u=https://www.axios.com/2026/03/24/judge-pentagon-anthropic-troubling">🇯🇵 日本語で読む</a>
+          </div>
+        </div>
+        <div class="news-item">
+          <div class="news-title">Anthropic Economic Index 公開 — Claude Opus 4.5/4.6 の業務利用データを分析</div>
+          <div class="news-summary">2026年2月のClaude利用動向レポート。ユーザーがどのようにAIを業務に統合しているかの定量データを公開。</div>
+          <div class="news-meta">
+            <a class="news-link" href="https://www.anthropic.com/research/economic-index-march-2026-report">anthropic.com</a>
+            <a class="ja-link" href="https://translate.google.com/translate?sl=en&tl=ja&u=https://www.anthropic.com/research/economic-index-march-2026-report">🇯🇵 日本語で読む</a>
+          </div>
+        </div>
+        <a class="more-link" onclick="openModal('anthropic')">＋ もっと見る（10件）</a>
+
+        <!-- ===== モデル・技術 ===== -->
+        <div class="cat cat-model">🧠 モデル・技術</div>
+        <div class="news-item">
+          <div class="news-title">OpenAI GPT-5.4 リリース — 3バリアント構成、コンテキスト105万トークン</div>
+          <div class="news-summary">Standard / Thinking / Pro の3種。個別事実誤り33%削減、全体応答誤り18%削減をGPT-5.2比で達成。</div>
+          <div class="news-meta">
+            <a class="news-link" href="https://llm-stats.com/ai-news">llm-stats.com</a>
+            <a class="ja-link" href="https://translate.google.com/translate?sl=en&tl=ja&u=https://llm-stats.com/ai-news">🇯🇵 日本語で読む</a>
+          </div>
+        </div>
+        <div class="news-item">
+          <div class="news-title">Google Gemini 3.1 Flash-Lite — 2.5倍高速化、$0.25/M入力トークン</div>
+          <div class="news-summary">出力生成45%高速化のコスパ特化モデル。軽量APIユースケースに最適と評価。</div>
+          <div class="news-meta">
+            <a class="news-link" href="https://www.buildfastwithai.com/blogs/ai-models-march-2026-releases">buildfastwithai.com</a>
+            <a class="ja-link" href="https://translate.google.com/translate?sl=en&tl=ja&u=https://www.buildfastwithai.com/blogs/ai-models-march-2026-releases">🇯🇵 日本語で読む</a>
+          </div>
+        </div>
+        <a class="more-link" onclick="openModal('model')">＋ もっと見る（10件）</a>
+
+        <!-- ===== ブログ記事（日本語限定） ===== -->
+        <div class="cat cat-blog">📝 ブログ記事</div>
+        <div class="news-item">
+          <div class="news-title">Build, Don't Buy — 2026年、AIエージェントは内製する時代へ</div>
+          <div class="news-summary">Dify等のノーコードツールを使ったAIエージェント内製の実践ガイド。SaaS依存からの脱却を提案。</div>
+          <div class="news-meta">
+            <a class="news-link" href="https://zenn.dev/satoshissss/articles/5be253a330896c">zenn.dev</a>
+          </div>
+        </div>
+        <div class="news-item">
+          <div class="news-title">週刊AI駆動開発 — Cursor / Claude Code / Devin の役割と思想の違いを整理</div>
+          <div class="news-summary">3つのAI開発ツールをコンセプトから比較。どの場面でどれを使うべきかのフレームワークを提示。</div>
+          <div class="news-meta">
+            <a class="news-link" href="https://zenn.dev/pppp303/articles/weekly_ai_20260315">zenn.dev</a>
+          </div>
+        </div>
+        <a class="more-link" onclick="openModal('blog')">＋ もっと見る（10件）</a>
+
+        <!-- ===== その他話題のニュース ===== -->
+        <div class="cat cat-other">💬 その他話題のニュース</div>
+        <div class="news-item">
+          <div class="news-title">OpenAI、Soraアプリを終了 — Disney 10億ドル投資・IP提携も白紙に</div>
+          <div class="news-summary">ローンチからわずか6ヶ月で終了。AI動画生成市場の収益化の難しさが浮き彫りに。</div>
+          <div class="news-meta">
+            <a class="news-link" href="https://techstartups.com/2026/03/25/top-tech-news-today-march-25-2026/">techstartups.com</a>
+            <a class="ja-link" href="https://translate.google.com/translate?sl=en&tl=ja&u=https://techstartups.com/2026/03/25/top-tech-news-today-march-25-2026/">🇯🇵 日本語で読む</a>
+          </div>
+        </div>
+        <div class="news-item">
+          <div class="news-title">AI駆動広告市場が63%成長 — 2026年に570億ドル到達の見通し</div>
+          <div class="news-summary">広告総支出に占めるAI活用比率が急拡大。パーソナライズ広告とクリエイティブ自動生成が主な成長ドライバー。</div>
+          <div class="news-meta">
+            <a class="news-link" href="https://www.humai.blog/ai-news-trends-march-2026-complete-monthly-digest/">humai.blog</a>
+            <a class="ja-link" href="https://translate.google.com/translate?sl=en&tl=ja&u=https://www.humai.blog/ai-news-trends-march-2026-complete-monthly-digest/">🇯🇵 日本語で読む</a>
+          </div>
+        </div>
+        <a class="more-link" onclick="openModal('other')">＋ もっと見る（10件）</a>
+
+        <hr class="divider">
+        <div class="footer">毎朝9時自動投稿 ｜ Powered by Claude API ｜ 🇯🇵 = Google翻訳経由</div>
+      </div>
+
+      <div class="reactions">
+        <span class="reaction">🔥 4</span>
+        <span class="reaction">👀 3</span>
+        <span class="reaction">🙏 1</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================= -->
+<!-- Modal: Xで話題 もっと見る      -->
+<!-- ============================= -->
+<div class="modal-overlay" id="modal-x">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('x')">&times;</button>
+    <h2>🔥 Xで話題 — おすすめ10件</h2>
+    <div class="modal-sub">2026年3月26日</div>
+    <div class="m-item"><div class="m-rank">#1</div><div class="m-title">OpenClaw が「次のChatGPT」として爆発的に拡散</div><div class="m-summary">個人開発者のOSSエージェントがローカルPCで自律動作。クラウドAPI不要で一気にバズ。</div><div class="m-meta"><a class="news-link" href="https://www.cnbc.com/2026/03/21/openclaw-chatgpt-moment-sparks-concern-ai-models-becoming-commodities.html">cnbc.com</a><a class="ja-link" href="https://translate.google.com/translate?sl=en&tl=ja&u=https://www.cnbc.com/2026/03/21/openclaw-chatgpt-moment-sparks-concern-ai-models-becoming-commodities.html">🇯🇵 日本語で読む</a></div></div>
+    <div class="m-item"><div class="m-rank">#2</div><div class="m-title">米AI Accountability Act 成立 — バイアス監査義務化</div><div class="m-summary">採用・融資・医療AIに定期的なバイアス監査と結果公開を義務付け。</div><div class="m-meta"><a class="news-link" href="https://theaitrack.com/ai-news-march-2026-in-depth-and-concise/">theaitrack.com</a><a class="ja-link" href="https://translate.google.com/translate?sl=en&tl=ja&u=https://theaitrack.com/ai-news-march-2026-in-depth-and-concise/">🇯🇵 日本語で読む</a></div></div>
+    <div class="m-item"><div class="m-rank">#3</div><div class="m-title">Jensen Huang「AGIはもう来ている」— GTC 2026基調講演で物議</div><div class="m-summary">「10億ドルビジネスを自律運営できるシステム＝AGI」と再定義し、すでに実現と主張。</div><div class="m-meta"><a class="news-link" href="https://blogs.nvidia.com/blog/gtc-2026-news/">blogs.nvidia.com</a><a class="ja-link" href="https://translate.google.com/translate?sl=en&tl=ja&u=https://blogs.nvidia.com/blog/gtc-2026-news/">🇯🇵 日本語で読む</a></div></div>
+    <div class="m-item"><div class="m-rank">#4</div><div class="m-title">xAI、Grokモバイルアプリで全ユーザーに画像・動画生成を解放</div><div class="m-summary">有料プラン限定だったGrokの生成機能を無料ユーザーにも開放。X上で作例が大量に投稿。</div><div class="m-meta"><a class="news-link" href="https://web.swipeinsight.app/topics/x-twitter">swipeinsight.app</a><a class="ja-link" href="https://translate.google.com/translate?sl=en&tl=ja&u=https://web.swipeinsight.app/topics/x-twitter">🇯🇵 日本語で読む</a></div></div>
+    <div class="m-item"><div class="m-rank">#5</div><div class="m-title">OpenAI $110B調達、評価額$730Bに — Amazon・NVIDIA・SoftBank参加</div><div class="m-summary">史上最大級のAI企業資金調達。AWS連携拡大とNVIDIAインフラ増強を発表。</div><div class="m-meta"><a class="news-link" href="https://www.crescendo.ai/news/latest-ai-news-and-updates">crescendo.ai</a><a class="ja-link" href="https://translate.google.com/translate?sl=en&tl=ja&u=https://www.crescendo.ai/news/latest-ai-news-and-updates">🇯🇵 日本語で読む</a></div></div>
+    <div class="m-item"><div class="m-rank">#6</div><div class="m-title">X、パロディ・ファンアカウントに道化帽アイコンのラベル義務化</div><div class="m-summary">AIで生成されたなりすましアカウント対策として導入。表示義務違反はアカウント凍結対象に。</div><div class="m-meta"><a class="news-link" href="https://socialbee.com/blog/twitter-updates/">socialbee.com</a><a class="ja-link" href="https://translate.google.com/translate?sl=en&tl=ja&u=https://socialbee.com/blog/twitter-updates/">🇯🇵 日本語で読む</a></div></div>
+    <div class="m-item"><div class="m-rank">#7</div><div class="m-title">AMD Ryzen AI 400シリーズ — NPU性能大幅向上でローカルAI加速</div><div class="m-summary">CES 2026発表のノートPC向けCPU。リアルタイム翻訳やコンテンツ生成をローカルで高速実行。</div><div class="m-meta"><a class="news-link" href="https://www.insightfulpost.com/what-is-artificial-intelligence-news-2026/">insightfulpost.com</a><a class="ja-link" href="https://translate.google.com/translate?sl=en&tl=ja&u=https://www.insightfulpost.com/what-is-artificial-intelligence-news-2026/">🇯🇵 日本語で読む</a></div></div>
+    <div class="m-item"><div class="m-rank">#8</div><div class="m-title">AI生成コンテンツの著作権 — 「人間の関与」基準を巡りX上で激論</div><div class="m-summary">プロンプトだけで生成した画像に著作権は認められるか？クリエイターコミュニティで議論白熱。</div><div class="m-meta"><a class="news-link" href="https://www.marketingprofs.com/opinions/2026/54448/ai-update-march-20-2026-ai-news-and-views-from-the-past-week">marketingprofs.com</a><a class="ja-link" href="https://translate.google.com/translate?sl=en&tl=ja&u=https://www.marketingprofs.com/opinions/2026/54448/ai-update-march-20-2026-ai-news-and-views-from-the-past-week">🇯🇵 日本語で読む</a></div></div>
+    <div class="m-item"><div class="m-rank">#9</div><div class="m-title">NVIDIA NemoClaw発表 — OpenClawにエンタープライズセキュリティを追加</div><div class="m-summary">Nemotronモデル+OpenShellランタイムをワンコマンドでインストール。企業利用に対応。</div><div class="m-meta"><a class="news-link" href="https://nvidianews.nvidia.com/news/nvidia-announces-nemoclaw">nvidianews.nvidia.com</a><a class="ja-link" href="https://translate.google.com/translate?sl=en&tl=ja&u=https://nvidianews.nvidia.com/news/nvidia-announces-nemoclaw">🇯🇵 日本語で読む</a></div></div>
+    <div class="m-item"><div class="m-rank">#10</div><div class="m-title">AI駆動広告市場が63%成長、2026年に570億ドル到達の見通し</div><div class="m-summary">パーソナライズ広告とクリエイティブ自動生成が成長ドライバー。</div><div class="m-meta"><a class="news-link" href="https://www.humai.blog/ai-news-trends-march-2026-complete-monthly-digest/">humai.blog</a><a class="ja-link" href="https://translate.google.com/translate?sl=en&tl=ja&u=https://www.humai.blog/ai-news-trends-march-2026-complete-monthly-digest/">🇯🇵 日本語で読む</a></div></div>
+  </div>
+</div>
+
+<!-- ============================= -->
+<!-- Modal: Anthropic もっと見る    -->
+<!-- ============================= -->
+<div class="modal-overlay" id="modal-anthropic">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('anthropic')">&times;</button>
+    <h2>🟠 Anthropic — おすすめ10件</h2>
+    <div class="modal-sub">2026年3月26日</div>
+    <div class="m-item"><div class="m-rank">#1</div><div class="m-title">Anthropic vs 米国防総省 — 連邦裁で公聴会、判事が政府側に疑問</div><div class="m-summary">ガードレール撤去拒否に端を発した訴訟。Rita Lin判事は政府の主張を「troubling」と評した。</div><div class="m-meta"><a class="news-link" href="https://www.axios.com/2026/03/24/judge-pentagon-anthropic-troubling">axios.com</a><a class="ja-link" href="https://translate.google.com/translate?sl=en&tl=ja&u=https://www.axios.com/2026/03/24/judge-pentagon-anthropic-troubling">🇯🇵 日本語で読む</a></div></div>
+    <div class="m-item"><div class="m-rank">#2</div><div class="m-title">Economic Index 公開 — Claude Opus 4.5/4.6の業務利用データ分析</div><div class="m-summary">実際のユーザーがどのようにAIを業務統合しているかの定量データ。</div><div class="m-meta"><a class="news-link" href="https://www.anthropic.com/research/economic-index-march-2026-report">anthropic.com</a><a class="ja-link" href="https://translate.google.com/translate?sl=en&tl=ja&u=https://www.anthropic.com/research/economic-index-march-2026-report">🇯🇵 日本語で読む</a></div></div>
+    <div class="m-item"><div class="m-rank">#3</div><div class="m-title">新裁判資料：国防総省は「ほぼ合意」とAnthropicに伝えていた</div><div class="m-summary">トランプ大統領が関係断絶を宣言する1週間前、国防次官がCEO Amodeiに「非常に近い」とメール。</div><div class="m-meta"><a class="news-link" href="https://techcrunch.com/2026/03/20/new-court-filing-reveals-pentagon-told-anthropic-the-two-sides-were-nearly-aligned-a-week-after-trump-declared-the-relationship-kaput/">techcrunch.com</a><a class="ja-link" href="https://translate.google.com/translate?sl=en&tl=ja&u=https://techcrunch.com/2026/03/20/new-court-filing-reveals-pentagon-told-anthropic-the-two-sides-were-nearly-aligned-a-week-after-trump-declared-the-relationship-kaput/">🇯🇵 日本語で読む</a></div></div>
+    <div class="m-item"><div class="m-rank">#4</div><div class="m-title">国防総省「Anthropicは防衛AIシステムを転覆しうる」と警告</div><div class="m-summary">安全保障リスク指定の根拠として、国防総省がAnthropicのシステム影響力を指摘。</div><div class="m-meta"><a class="news-link" href="https://www.govinfosecurity.com/pentagon-warns-anthropic-could-subvert-defense-ai-systems-a-31087">govinfosecurity.com</a><a class="ja-link" href="https://translate.google.com/translate?sl=en&tl=ja&u=https://www.govinfosecurity.com/pentagon-warns-anthropic-could-subvert-defense-ai-systems-a-31087">🇯🇵 日本語で読む</a></div></div>
+    <div class="m-item"><div class="m-rank">#5</div><div class="m-title">司法省がAnthropicの修正第1条の主張を退けるよう裁判所に要請</div><div class="m-summary">Anthropicの「AIガードレールは言論の自由」という主張に対し、政府が反論。</div><div class="m-meta"><a class="news-link" href="https://thehill.com/policy/technology/5790299-trump-administration-pentagon-anthropic-lawsuit/">thehill.com</a><a class="ja-link" href="https://translate.google.com/translate?sl=en&tl=ja&u=https://thehill.com/policy/technology/5790299-trump-administration-pentagon-anthropic-lawsuit/">🇯🇵 日本語で読む</a></div></div>
+    <div class="m-item"><div class="m-rank">#6</div><div class="m-title">Al Jazeera特集：サンフランシスコ法廷でのAnthropic対国防総省の全容</div><div class="m-summary">国際メディアの視点から訴訟の経緯と争点を包括的に報道。</div><div class="m-meta"><a class="news-link" href="https://www.aljazeera.com/economy/2026/3/24/anthropic-challenges-us-pentagons-ban-in-san-francisco-court-showdown">aljazeera.com</a><a class="ja-link" href="https://translate.google.com/translate?sl=en&tl=ja&u=https://www.aljazeera.com/economy/2026/3/24/anthropic-challenges-us-pentagons-ban-in-san-francisco-court-showdown">🇯🇵 日本語で読む</a></div></div>
+    <div class="m-item"><div class="m-rank">#7</div><div class="m-title">MCP Elicitationサポートなど — Claude Code 最新アップデート</div><div class="m-summary">Elicitation hooks、startup nameフラグ、sparse worktreeパス、PostCompact hookなど。</div><div class="m-meta"><a class="news-link" href="https://releasebot.io/updates/anthropic">releasebot.io</a><a class="ja-link" href="https://translate.google.com/translate?sl=en&tl=ja&u=https://releasebot.io/updates/anthropic">🇯🇵 日本語で読む</a></div></div>
+    <div class="m-item"><div class="m-rank">#8</div><div class="m-title">NPR：政府のデータブローカー利用とAnthropicの位置付け</div><div class="m-summary">ICEの監視データ購入問題にAnthropicの技術が絡む可能性をNPRが報道。</div><div class="m-meta"><a class="news-link" href="https://www.npr.org/2026/03/25/nx-s1-5752369/ice-surveillance-data-brokers-congress-anthropic">npr.org</a><a class="ja-link" href="https://translate.google.com/translate?sl=en&tl=ja&u=https://www.npr.org/2026/03/25/nx-s1-5752369/ice-surveillance-data-brokers-congress-anthropic">🇯🇵 日本語で読む</a></div></div>
+    <div class="m-item"><div class="m-rank">#9</div><div class="m-title">GSA・NISTが連携 — 政府機関のAIツールセキュリティ確保で新パートナーシップ</div><div class="m-summary">Anthropicの国家安全保障リスク指定問題を背景に、政府AI調達の安全基準策定が加速。</div><div class="m-meta"><a class="news-link" href="https://federalnewsnetwork.com/federal-newscast/2026/03/dod-attempts-to-make-its-case-for-anthropics-label-as-national-security-risk/">federalnewsnetwork.com</a><a class="ja-link" href="https://translate.google.com/translate?sl=en&tl=ja&u=https://federalnewsnetwork.com/federal-newscast/2026/03/dod-attempts-to-make-its-case-for-anthropics-label-as-national-security-risk/">🇯🇵 日本語で読む</a></div></div>
+    <div class="m-item"><div class="m-rank">#10</div><div class="m-title">Anthropic CEO Dario Amodei — 安全性と有用性の両立を改めて主張</div><div class="m-summary">訴訟を受けた公式声明で、AIの安全ガードレールは社会全体の利益であると強調。</div><div class="m-meta"><a class="news-link" href="https://www.anthropic.com">anthropic.com</a><a class="ja-link" href="https://translate.google.com/translate?sl=en&tl=ja&u=https://www.anthropic.com">🇯🇵 日本語で読む</a></div></div>
+  </div>
+</div>
+
+<!-- ============================= -->
+<!-- Modal: モデル・技術 もっと見る  -->
+<!-- ============================= -->
+<div class="modal-overlay" id="modal-model">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('model')">&times;</button>
+    <h2>🧠 モデル・技術 — おすすめ10件</h2>
+    <div class="modal-sub">2026年3月26日</div>
+    <div class="m-item"><div class="m-rank">#1</div><div class="m-title">OpenAI GPT-5.4 リリース — 3バリアント構成、コンテキスト105万トークン</div><div class="m-summary">Standard / Thinking / Pro の3種。事実誤り33%削減、応答誤り18%削減。</div><div class="m-meta"><a class="news-link" href="https://llm-stats.com/ai-news">llm-stats.com</a><a class="ja-link" href="https://translate.google.com/translate?sl=en&tl=ja&u=https://llm-stats.com/ai-news">🇯🇵 日本語で読む</a></div></div>
+    <div class="m-item"><div class="m-rank">#2</div><div class="m-title">Google Gemini 3.1 Flash-Lite — 2.5倍高速、$0.25/M入力トークン</div><div class="m-summary">出力生成45%高速化。軽量APIユースケースに最適。</div><div class="m-meta"><a class="news-link" href="https://www.buildfastwithai.com/blogs/ai-models-march-2026-releases">buildfastwithai.com</a><a class="ja-link" href="https://translate.google.com/translate?sl=en&tl=ja&u=https://www.buildfastwithai.com/blogs/ai-models-march-2026-releases">🇯🇵 日本語で読む</a></div></div>
+    <div class="m-item"><div class="m-rank">#3</div><div class="m-title">NVIDIA NemoClaw — OpenClawにエンタープライズセキュリティを追加</div><div class="m-summary">Nemotron+OpenShellをワンコマンドでインストール。企業向けプライバシー制御付き。</div><div class="m-meta"><a class="news-link" href="https://nvidianews.nvidia.com/news/nvidia-announces-nemoclaw">nvidianews.nvidia.com</a><a class="ja-link" href="https://translate.google.com/translate?sl=en&tl=ja&u=https://nvidianews.nvidia.com/news/nvidia-announces-nemoclaw">🇯🇵 日本語で読む</a></div></div>
+    <div class="m-item"><div class="m-rank">#4</div><div class="m-title">NVIDIA Nemotron 3 Super — 120Bパラメータのエンタープライズコーディングモデル</div><div class="m-summary">SWE-Bench Verifiedで60.47%を達成。企業向けコード生成に特化。</div><div class="m-meta"><a class="news-link" href="https://llm-stats.com/llm-updates">llm-stats.com</a><a class="ja-link" href="https://translate.google.com/translate?sl=en&tl=ja&u=https://llm-stats.com/llm-updates">🇯🇵 日本語で読む</a></div></div>
+    <div class="m-item"><div class="m-rank">#5</div><div class="m-title">Alibaba Qwen 3.5 9B — 13倍大きなモデルを上回る推論性能</div><div class="m-summary">9Bパラメータで大学院レベルの推論ベンチマークを突破。小型モデルの可能性を示す。</div><div class="m-meta"><a class="news-link" href="https://www.buildfastwithai.com/blogs/ai-models-march-2026-releases">buildfastwithai.com</a><a class="ja-link" href="https://translate.google.com/translate?sl=en&tl=ja&u=https://www.buildfastwithai.com/blogs/ai-models-march-2026-releases">🇯🇵 日本語で読む</a></div></div>
+    <div class="m-item"><div class="m-rank">#6</div><div class="m-title">LTX 2.3 — 22Bパラメータで映像と音声を同時生成、4K/50FPS対応</div><div class="m-summary">Lightricksの拡散トランスフォーマーモデル。単一フォワードパスで映像+音声を同期生成。</div><div class="m-meta"><a class="news-link" href="https://llm-stats.com/llm-updates">llm-stats.com</a><a class="ja-link" href="https://translate.google.com/translate?sl=en&tl=ja&u=https://llm-stats.com/llm-updates">🇯🇵 日本語で読む</a></div></div>
+    <div class="m-item"><div class="m-rank">#7</div><div class="m-title">ByteDance Helios — 単一GPUで60秒動画をリアルタイム生成</div><div class="m-summary">北京大学・Canvaとの共同開発。長尺動画生成のコスト削減に貢献。</div><div class="m-meta"><a class="news-link" href="https://www.devflokers.com/blog/ai-news-march-24-2026-releases-breakthroughs">devflokers.com</a><a class="ja-link" href="https://translate.google.com/translate?sl=en&tl=ja&u=https://www.devflokers.com/blog/ai-news-march-24-2026-releases-breakthroughs">🇯🇵 日本語で読む</a></div></div>
+    <div class="m-item"><div class="m-rank">#8</div><div class="m-title">ARM × Meta「AGI CPU」— Neoverse N3ベース、136コア/3.7GHz</div><div class="m-summary">ARMが自社シリコン製造に参入。PCIe Gen6 96レーン搭載のAIデータセンター向けCPU。</div><div class="m-meta"><a class="news-link" href="https://www.devflokers.com/blog/ai-news-march-24-2026-releases-breakthroughs">devflokers.com</a><a class="ja-link" href="https://translate.google.com/translate?sl=en&tl=ja&u=https://www.devflokers.com/blog/ai-news-march-24-2026-releases-breakthroughs">🇯🇵 日本語で読む</a></div></div>
+    <div class="m-item"><div class="m-rank">#9</div><div class="m-title">UniDex (CVPR 2026) — 人間の動画から50K+軌道データを生成</div><div class="m-summary">8種のロボットハンドに対応する汎用制御基盤。Georgia Tech・Stanford・Meta共同研究。</div><div class="m-meta"><a class="news-link" href="https://www.buildfastwithai.com/blogs/ai-models-march-2026-releases">buildfastwithai.com</a><a class="ja-link" href="https://translate.google.com/translate?sl=en&tl=ja&u=https://www.buildfastwithai.com/blogs/ai-models-march-2026-releases">🇯🇵 日本語で読む</a></div></div>
+    <div class="m-item"><div class="m-rank">#10</div><div class="m-title">NVIDIA × Emerald AI — AIファクトリーをグリッド資産として活用</div><div class="m-summary">エネルギー企業と連携し、AI計算資源を電力グリッドの柔軟な負荷調整に活用する構想。</div><div class="m-meta"><a class="news-link" href="https://investor.nvidia.com/news/press-release-details/2026/NVIDIA-and-Emerald-AI-Join-Leading-Energy-Companies-to-Pioneer-Flexible-AI-Factories-as-Grid-Assets/default.aspx">nvidia.com</a><a class="ja-link" href="https://translate.google.com/translate?sl=en&tl=ja&u=https://investor.nvidia.com/news/press-release-details/2026/NVIDIA-and-Emerald-AI-Join-Leading-Energy-Companies-to-Pioneer-Flexible-AI-Factories-as-Grid-Assets/default.aspx">🇯🇵 日本語で読む</a></div></div>
+  </div>
+</div>
+
+<!-- ============================= -->
+<!-- Modal: ブログ記事 もっと見る   -->
+<!-- ============================= -->
+<div class="modal-overlay" id="modal-blog">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('blog')">&times;</button>
+    <h2>📝 ブログ記事（日本語） — おすすめ10件</h2>
+    <div class="modal-sub">2026年3月26日 ｜ Zenn・Qiita・国内メディア</div>
+    <div class="m-item"><div class="m-rank">#1</div><div class="m-title">Build, Don't Buy — 2026年、AIエージェントは内製する時代へ</div><div class="m-summary">Dify等のノーコードツールを使ったAIエージェント内製の実践ガイド。</div><div class="m-meta"><a class="news-link" href="https://zenn.dev/satoshissss/articles/5be253a330896c">zenn.dev</a></div></div>
+    <div class="m-item"><div class="m-rank">#2</div><div class="m-title">週刊AI駆動開発 — Cursor / Claude Code / Devin の役割と思想の違い</div><div class="m-summary">3つのAI開発ツールをコンセプトから比較。使い分けのフレームワークを提示。</div><div class="m-meta"><a class="news-link" href="https://zenn.dev/pppp303/articles/weekly_ai_20260315">zenn.dev</a></div></div>
+    <div class="m-item"><div class="m-rank">#3</div><div class="m-title">AIの進化が速すぎても2026年中には陳腐化しない「3つの本質的スキル」</div><div class="m-summary">プロンプトエンジニアリングを超えた、エンジニアが持つべき根本スキルを考察。</div><div class="m-meta"><a class="news-link" href="https://zenn.dev/zatsucat/articles/83f285796ecee2">zenn.dev</a></div></div>
+    <div class="m-item"><div class="m-rank">#4</div><div class="m-title">今年の生成AIのテーマは「シミュレーション」である</div><div class="m-summary">テキスト→画像→動画の次に来る「世界シミュレーション」の潮流を分析。</div><div class="m-meta"><a class="news-link" href="https://zenn.dev/tesla/articles/545165ed6334c7">zenn.dev</a></div></div>
+    <div class="m-item"><div class="m-rank">#5</div><div class="m-title">2026年 AI・クラウド市場動向に関する個人的考察レポート</div><div class="m-summary">クラウドベンダー各社のAI戦略と市場予測を個人の視点でまとめた包括的レポート。</div><div class="m-meta"><a class="news-link" href="https://zenn.dev/nyanko_super/articles/c97008fb2b09ab">zenn.dev</a></div></div>
+    <div class="m-item"><div class="m-rank">#6</div><div class="m-title">プログラミング雑記 — AI活用コードレビューの倫理的課題</div><div class="m-summary">LLMによるコードレビュー自動化の利点と、コード品質・責任の所在に関する議論。</div><div class="m-meta"><a class="news-link" href="https://qiita.com/ishisaka/items/281ac5312f77d42dba35">qiita.com</a></div></div>
+    <div class="m-item"><div class="m-rank">#7</div><div class="m-title">LLMに人間の脳の長期記憶メカニズムを実装する — Python実践</div><div class="m-summary">海馬の記憶統合プロセスをLLMのメモリアーキテクチャに応用する手法の解説。</div><div class="m-meta"><a class="news-link" href="https://qiita.com/ishisaka/items/a0e792fecface1140ab8">qiita.com</a></div></div>
+    <div class="m-item"><div class="m-rank">#8</div><div class="m-title">IntelliJ / WebStorm / PyCharm — IDE AI機能アップデートまとめ</div><div class="m-summary">JetBrains系IDEのAIアシスタント最新機能をプログラミング言語別に解説。</div><div class="m-meta"><a class="news-link" href="https://qiita.com/ishisaka/items/281ac5312f77d42dba35">qiita.com</a></div></div>
+    <div class="m-item"><div class="m-rank">#9</div><div class="m-title">MotherComputer — Tech Blog開設レポート、AI活用開発体制の裏側</div><div class="m-summary">スタートアップがQiita・Zennで技術発信を始めた経緯とAI活用の社内体制を紹介。</div><div class="m-meta"><a class="news-link" href="https://mothercomputer.co.jp/news-273">mothercomputer.co.jp</a></div></div>
+    <div class="m-item"><div class="m-rank">#10</div><div class="m-title">週刊AI駆動開発 — 3月18日号：エージェント型CIパイプラインの構築</div><div class="m-summary">GitHub ActionsとAIエージェントを組み合わせたCI/CD自動化の実践例。</div><div class="m-meta"><a class="news-link" href="https://qiita.com/ishisaka/items/8e6b38d031167ff21d05">qiita.com</a></div></div>
+  </div>
+</div>
+
+<!-- ============================= -->
+<!-- Modal: その他 もっと見る       -->
+<!-- ============================= -->
+<div class="modal-overlay" id="modal-other">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('other')">&times;</button>
+    <h2>💬 その他話題のニュース — おすすめ10件</h2>
+    <div class="modal-sub">2026年3月26日</div>
+    <div class="m-item"><div class="m-rank">#1</div><div class="m-title">OpenAI、Soraアプリを終了 — Disney 10億ドル投資も白紙に</div><div class="m-summary">ローンチからわずか6ヶ月で終了。AI動画生成市場の収益化の難しさが浮き彫りに。</div><div class="m-meta"><a class="news-link" href="https://techstartups.com/2026/03/25/top-tech-news-today-march-25-2026/">techstartups.com</a><a class="ja-link" href="https://translate.google.com/translate?sl=en&tl=ja&u=https://techstartups.com/2026/03/25/top-tech-news-today-march-25-2026/">🇯🇵 日本語で読む</a></div></div>
+    <div class="m-item"><div class="m-rank">#2</div><div class="m-title">AI駆動広告市場が63%成長、2026年に570億ドル到達見通し</div><div class="m-summary">パーソナライズ広告とクリエイティブ自動生成が主な成長ドライバー。</div><div class="m-meta"><a class="news-link" href="https://www.humai.blog/ai-news-trends-march-2026-complete-monthly-digest/">humai.blog</a><a class="ja-link" href="https://translate.google.com/translate?sl=en&tl=ja&u=https://www.humai.blog/ai-news-trends-march-2026-complete-monthly-digest/">🇯🇵 日本語で読む</a></div></div>
+    <div class="m-item"><div class="m-rank">#3</div><div class="m-title">OpenAI $110B調達 — Amazon・NVIDIA・SoftBank参加、評価額$730B</div><div class="m-summary">AWS連携拡大とNVIDIAインフラ増強が目的。史上最大級のAI資金調達。</div><div class="m-meta"><a class="news-link" href="https://www.crescendo.ai/news/latest-ai-news-and-updates">crescendo.ai</a><a class="ja-link" href="https://translate.google.com/translate?sl=en&tl=ja&u=https://www.crescendo.ai/news/latest-ai-news-and-updates">🇯🇵 日本語で読む</a></div></div>
+    <div class="m-item"><div class="m-rank">#4</div><div class="m-title">NVIDIA × Emerald AI — AIファクトリーを電力グリッド資産として活用</div><div class="m-summary">エネルギー企業と連携し、AI計算資源を電力負荷調整に活用する新構想。</div><div class="m-meta"><a class="news-link" href="https://investor.nvidia.com/news/press-release-details/2026/NVIDIA-and-Emerald-AI-Join-Leading-Energy-Companies-to-Pioneer-Flexible-AI-Factories-as-Grid-Assets/default.aspx">nvidia.com</a><a class="ja-link" href="https://translate.google.com/translate?sl=en&tl=ja&u=https://investor.nvidia.com/news/press-release-details/2026/NVIDIA-and-Emerald-AI-Join-Leading-Energy-Companies-to-Pioneer-Flexible-AI-Factories-as-Grid-Assets/default.aspx">🇯🇵 日本語で読む</a></div></div>
+    <div class="m-item"><div class="m-rank">#5</div><div class="m-title">xAI Grok — 全ユーザーに画像・動画生成を無料開放</div><div class="m-summary">有料プラン限定だった機能をモバイルアプリで無料ユーザーにも開放。</div><div class="m-meta"><a class="news-link" href="https://web.swipeinsight.app/topics/x-twitter">swipeinsight.app</a><a class="ja-link" href="https://translate.google.com/translate?sl=en&tl=ja&u=https://web.swipeinsight.app/topics/x-twitter">🇯🇵 日本語で読む</a></div></div>
+    <div class="m-item"><div class="m-rank">#6</div><div class="m-title">ICE監視データとAI — 政府の令状なしデータ購入に議会が関心</div><div class="m-summary">NPR報道。データブローカーから個人情報を購入する政府機関のAI活用が問題視。</div><div class="m-meta"><a class="news-link" href="https://www.npr.org/2026/03/25/nx-s1-5752369/ice-surveillance-data-brokers-congress-anthropic">npr.org</a><a class="ja-link" href="https://translate.google.com/translate?sl=en&tl=ja&u=https://www.npr.org/2026/03/25/nx-s1-5752369/ice-surveillance-data-brokers-congress-anthropic">🇯🇵 日本語で読む</a></div></div>
+    <div class="m-item"><div class="m-rank">#7</div><div class="m-title">GSA・NIST新パートナーシップ — 政府AIツールのセキュリティ基準策定</div><div class="m-summary">連邦政府のAI調達に関するセキュリティ要件を共同で策定。</div><div class="m-meta"><a class="news-link" href="https://federalnewsnetwork.com/federal-newscast/2026/03/dod-attempts-to-make-its-case-for-anthropics-label-as-national-security-risk/">federalnewsnetwork.com</a><a class="ja-link" href="https://translate.google.com/translate?sl=en&tl=ja&u=https://federalnewsnetwork.com/federal-newscast/2026/03/dod-attempts-to-make-its-case-for-anthropics-label-as-national-security-risk/">🇯🇵 日本語で読む</a></div></div>
+    <div class="m-item"><div class="m-rank">#8</div><div class="m-title">AMD Ryzen AI 400シリーズ — NPU強化でローカルAI処理を加速</div><div class="m-summary">CES 2026発表。リアルタイム翻訳やコンテンツ生成をノートPCローカルで実行。</div><div class="m-meta"><a class="news-link" href="https://www.insightfulpost.com/what-is-artificial-intelligence-news-2026/">insightfulpost.com</a><a class="ja-link" href="https://translate.google.com/translate?sl=en&tl=ja&u=https://www.insightfulpost.com/what-is-artificial-intelligence-news-2026/">🇯🇵 日本語で読む</a></div></div>
+    <div class="m-item"><div class="m-rank">#9</div><div class="m-title">AI生成コンテンツの著作権 — 「人間の関与」基準を巡る最新議論</div><div class="m-summary">プロンプトのみで生成した画像に著作権は成立するか。クリエイターと法律家の間で議論継続中。</div><div class="m-meta"><a class="news-link" href="https://www.marketingprofs.com/opinions/2026/54448/ai-update-march-20-2026-ai-news-and-views-from-the-past-week">marketingprofs.com</a><a class="ja-link" href="https://translate.google.com/translate?sl=en&tl=ja&u=https://www.marketingprofs.com/opinions/2026/54448/ai-update-march-20-2026-ai-news-and-views-from-the-past-week">🇯🇵 日本語で読む</a></div></div>
+    <div class="m-item"><div class="m-rank">#10</div><div class="m-title">X パロディ・ファンアカウントに道化帽ラベル義務化</div><div class="m-summary">AIなりすましアカウント対策。義務違反はアカウント凍結の対象に。</div><div class="m-meta"><a class="news-link" href="https://socialbee.com/blog/twitter-updates/">socialbee.com</a><a class="ja-link" href="https://translate.google.com/translate?sl=en&tl=ja&u=https://socialbee.com/blog/twitter-updates/">🇯🇵 日本語で読む</a></div></div>
+  </div>
+</div>
+
+<script>
+function openModal(id) {
+  document.getElementById('modal-' + id).classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function closeModal(id) {
+  document.getElementById('modal-' + id).classList.remove('open');
+  document.body.style.overflow = '';
+}
+// close on overlay click
+document.querySelectorAll('.modal-overlay').forEach(el => {
+  el.addEventListener('click', e => {
+    if (e.target === el) {
+      el.classList.remove('open');
+      document.body.style.overflow = '';
+    }
+  });
+});
+</script>
+</body>
+</html>

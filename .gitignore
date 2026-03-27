@@ -22,3 +22,6 @@ Thumbs.db
 
 # Dedup store
 dedup_store.json
+
+# Temporary files
+.slack-pending.json

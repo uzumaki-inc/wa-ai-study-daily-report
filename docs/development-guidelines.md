@@ -141,26 +141,13 @@ dedup_store.json    # 投稿済みURL記録（ローカルステート）
 
 ## 開発フェーズ計画
 
-### Phase 1: MVP（最初に作るもの）
+各フェーズの詳細（スコープ・完了条件・技術判断）は `.steering/` 配下を参照。
 
-- [ ] プロジェクト初期化（`npm init` / `poetry init`）
-- [ ] RSS取得 → ターミナル出力で確認
-- [ ] Claude API要約 → ターミナル出力で確認
-- [ ] Slack手動投稿 → チャンネルへの投稿確認
-- [ ] 3つをつなげて1本のスクリプトとして動作確認
-
-### Phase 2: 安定化
-
-- [ ] 重複排除（Dedup）実装
-- [ ] エラーハンドリング強化
-- [ ] 環境変数バリデーション（起動時チェック）
-- [ ] ログ出力整備
-
-### Phase 3: 自動化
-
-- [ ] GitHub Actions設定（cron毎朝9時JST）
-- [ ] GitHub Secretsにキーを登録
-- [ ] 本番動作確認（1週間の投稿を確認）
+| フェーズ | ステアリング | ステータス |
+|---|---|---|
+| Phase 1: MVP | [.steering/phase1.md](../.steering/phase1.md) | 完了 |
+| Phase 2: 安定化 | [.steering/phase2.md](../.steering/phase2.md) | 未着手 |
+| Phase 3: 自動化 | [.steering/phase3.md](../.steering/phase3.md) | 未着手 |
 
 ---
 

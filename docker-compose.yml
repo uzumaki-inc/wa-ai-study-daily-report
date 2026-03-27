@@ -1,13 +1,16 @@
 services:
+  # 開発用（ts-nodeで直接実行）
   app:
-    build: .
+    build:
+      context: .
+      target: builder
     env_file:
       - .env
     volumes:
       - ./src:/app/src
     command: npx ts-node src/index.ts
 
-  # 本番用（ビルド済みJSを実行）
+  # 本番用（マルチステージビルド済みJSを実行）
   app-prod:
     build: .
     env_file:

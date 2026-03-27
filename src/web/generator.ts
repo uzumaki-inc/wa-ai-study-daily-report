@@ -10,13 +10,18 @@ const CATEGORY_META: { key: string; emoji: string; label: string }[] = [
   { key: 'other', emoji: '💬', label: 'その他話題のニュース' },
 ];
 
+function safeUrl(url: string): string {
+  return /^https?:\/\//.test(url) ? escapeHtml(url) : '#';
+}
+
 function articleToHtml(article: CategoryArticle): string {
+  const url = safeUrl(article.url);
   const translateLink =
     article.lang === 'en'
-      ? ` <a href="https://translate.google.com/translate?sl=en&tl=ja&u=${encodeURIComponent(article.url)}">日本語で読む</a>`
+      ? ` <a href="${safeUrl(`https://translate.google.com/translate?sl=en&tl=ja&u=${encodeURIComponent(article.url)}`)}">日本語で読む</a>`
       : '';
   return `<li>
-  <a href="${article.url}" target="_blank">${escapeHtml(article.title)}</a>
+  <a href="${url}" target="_blank">${escapeHtml(article.title)}</a>
   <span class="source">${escapeHtml(article.source)}${translateLink}</span>
 </li>`;
 }
@@ -26,7 +31,8 @@ function escapeHtml(text: string): string {
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
 }
 
 function buildHtml(dateStr: string, articles: CategorizedArticles): string {

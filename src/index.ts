@@ -4,6 +4,7 @@ import { fetchAllFeeds } from './fetcher/rss';
 import { summarizeArticles } from './summarizer/claude';
 import { postToSlack } from './poster/slack';
 import { filterNewArticles, markAsPosted } from './utils/dedup';
+import { generateWebView } from './web/generator';
 
 async function main() {
   console.log('=== AI学習日報 Slack Bot ===');
@@ -15,10 +16,10 @@ async function main() {
   console.log(`[Config] ${config.feeds.length}件のRSSフィード設定を読み込み`);
 
   // 2. RSS取得
-  const allArticles = await fetchAllFeeds(config.feeds, config.maxArticlesPerFeed);
+  const fetchedArticles = await fetchAllFeeds(config.feeds, config.maxArticlesPerFeed);
 
   // 3. 重複排除 + 件数制限
-  const newArticles = filterNewArticles(allArticles);
+  const newArticles = filterNewArticles(fetchedArticles);
   const articles = newArticles.slice(0, config.maxArticlesTotal);
   if (articles.length !== newArticles.length) {
     console.log(`[Config] 記事数を${newArticles.length}件から${articles.length}件に制限`);
@@ -29,17 +30,22 @@ async function main() {
   }
 
   // 4. Claude APIで要約
-  const summary = await summarizeArticles(articles, config);
+  const { slackText, allArticles: categorizedArticles } = await summarizeArticles(articles, config);
 
-  // 5. ターミナル出力（デバッグ用）
+  // 5. Webビュー生成（「もっと見る」ページ）
+  const today = new Date();
+  const dateStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+  generateWebView(dateStr, categorizedArticles);
+
+  // 6. ターミナル出力（デバッグ用）
   console.log('\n--- 要約結果 ---');
-  console.log(summary);
+  console.log(slackText);
   console.log('--- ここまで ---\n');
 
-  // 6. Slack投稿
-  await postToSlack(summary, config);
+  // 7. Slack投稿
+  await postToSlack(slackText, config);
 
-  // 7. 投稿済みURLを記録
+  // 8. 投稿済みURLを記録
   markAsPosted(articles.map((a) => a.url));
 
   console.log('完了しました');

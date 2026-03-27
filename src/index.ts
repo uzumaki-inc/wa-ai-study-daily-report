@@ -53,14 +53,21 @@ async function post() {
     return;
   }
 
-  const config = loadConfig();
+  const webhookUrl = process.env.SLACK_WEBHOOK_URL;
+  if (!webhookUrl) {
+    throw new Error('環境変数 SLACK_WEBHOOK_URL が設定されていません');
+  }
+  const slackConfig = {
+    slack: { webhookUrl, channel: process.env.SLACK_CHANNEL || '' },
+  } as Config;
+
   const { slackText, articleUrls } = JSON.parse(fs.readFileSync(RESULT_PATH, 'utf-8'));
 
   console.log('\n--- 要約結果 ---');
   console.log(slackText);
   console.log('--- ここまで ---\n');
 
-  await postToSlack(slackText, config);
+  await postToSlack(slackText, slackConfig);
 
   markAsPosted(articleUrls);
 

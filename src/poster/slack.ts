@@ -2,12 +2,15 @@ import fs from 'fs';
 import path from 'path';
 import { IncomingWebhook } from '@slack/webhook';
 import { SectionBlock, ContextBlock, KnownBlock } from '@slack/types';
-import { Config } from '../config';
 import { withRetry } from '../utils/retry';
+
+type SlackConfig = {
+  slack: { webhookUrl: string; channel: string };
+};
 
 export async function postToSlack(
   summaryText: string,
-  config: Config
+  config: SlackConfig
 ): Promise<void> {
   const webhook = new IncomingWebhook(config.slack.webhookUrl, {
     channel: config.slack.channel || undefined,

@@ -1,20 +1,29 @@
 import fs from 'fs';
 import path from 'path';
 
-const STORE_PATH = path.join(process.cwd(), 'dedup_store.json');
-const TTL_DAYS = 30;
+const STORE_PATH =
+  process.env.DEDUP_STORE_PATH ||
+  path.join(process.cwd(), 'dedup_store.json');
+const TTL_DAYS = parseInt(process.env.DEDUP_TTL_DAYS || '30', 10);
+
+type DedupEntry = { url: string; posted_at: string };
 
 type DedupStore = {
-  posted_urls: { url: string; posted_at: string }[];
-  last_run: string;
+  posted_urls: DedupEntry[];
 };
 
+// メモリキャッシュ — 1実行で1回だけファイルを読む
+let _cache: DedupStore | null = null;
+
 function loadStore(): DedupStore {
+  if (_cache) return _cache;
   try {
     const data = fs.readFileSync(STORE_PATH, 'utf-8');
-    return JSON.parse(data);
+    _cache = JSON.parse(data);
+    return _cache!;
   } catch {
-    return { posted_urls: [], last_run: '' };
+    _cache = { posted_urls: [] };
+    return _cache;
   }
 }
 
@@ -22,20 +31,17 @@ function saveStore(store: DedupStore): void {
   fs.writeFileSync(STORE_PATH, JSON.stringify(store, null, 2), 'utf-8');
 }
 
-function pruneOldEntries(store: DedupStore): void {
+export function filterNewArticles<T extends { url: string }>(
+  articles: T[]
+): T[] {
+  const store = loadStore();
+
+  // TTL超過の古いエントリを削除
   const cutoff = new Date();
   cutoff.setDate(cutoff.getDate() - TTL_DAYS);
   store.posted_urls = store.posted_urls.filter(
     (entry) => new Date(entry.posted_at) > cutoff
   );
-}
-
-export function filterNewArticles<T extends { url: string }>(
-  articles: T[]
-): T[] {
-  const store = loadStore();
-  pruneOldEntries(store);
-  saveStore(store);
 
   const postedUrls = new Set(store.posted_urls.map((e) => e.url));
   const newArticles = articles.filter((a) => !postedUrls.has(a.url));
@@ -50,11 +56,8 @@ export function markAsPosted(urls: string[]): void {
   const store = loadStore();
   const now = new Date().toISOString();
   for (const url of urls) {
-    if (!store.posted_urls.some((e) => e.url === url)) {
-      store.posted_urls.push({ url, posted_at: now });
-    }
+    store.posted_urls.push({ url, posted_at: now });
   }
-  store.last_run = now;
   saveStore(store);
   console.log(`[Dedup] ${urls.length}件のURLを記録`);
 }

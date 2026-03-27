@@ -16,6 +16,7 @@
 - [ ] `.github/workflows/daily-post.yml` 作成（cron: `0 0 * * *` UTC = JST 09:00）
 - [ ] GitHub Secretsに `ANTHROPIC_API_KEY`, `SLACK_WEBHOOK_URL`, `SLACK_CHANNEL` を登録
 - [ ] ワークフローの手動実行（`workflow_dispatch`）対応
+- [ ] `dedup_store.json` の永続化（`actions/cache` 等で実行間の引き継ぎ）
 
 #### CI/CD
 - [ ] PR時の自動コードレビュー（`/code-review` をGitHub Actionsで実行）
@@ -24,6 +25,11 @@
 #### Dockerfile本番化
 - [ ] 非rootユーザーでのコンテナ実行
 - [ ] 本番用ビルド最適化（不要なdevDependencies除外）
+
+#### Phase 2 レビューからの持ち越し
+- [ ] dedup.tsのユニットテスト追加
+- [ ] retryテストのfake timer化（`vi.useFakeTimers()`）
+- [ ] ESLint導入
 
 #### 本番検証
 - [ ] 1週間の自動投稿を確認（月〜金の5回）

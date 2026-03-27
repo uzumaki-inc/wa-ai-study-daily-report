@@ -1,7 +1,7 @@
 # Phase 3: 自動化 — ステアリング
 
-> **ステータス**: 未着手
-> **ブランチ**: `feature/phase3-automation`（予定）
+> **ステータス**: 本番稼働中（2026-03-27〜）検証期間
+> **ブランチ**: `feature/phase3-automation` → `develop` → `main` にマージ済み
 > **前提**: Phase 2（安定化）完了後に着手
 
 ## ゴール
@@ -13,34 +13,35 @@
 ### 実装タスク
 
 #### GitHub Actions
-- [ ] `.github/workflows/daily-post.yml` 作成（cron: `0 0 * * *` UTC = JST 09:00）
-- [ ] GitHub Secretsに `ANTHROPIC_API_KEY`, `SLACK_WEBHOOK_URL`, `SLACK_CHANNEL` を登録
-- [ ] ワークフローの手動実行（`workflow_dispatch`）対応
-- [ ] `dedup_store.json` の永続化（`actions/cache` 等で実行間の引き継ぎ）
+- [x] `.github/workflows/daily-post.yml` 作成（cron: `0 0 * * 1-5` 月〜金のみ）
+- [x] GitHub Secretsに `ANTHROPIC_API_KEY`, `SLACK_WEBHOOK_URL`, `SLACK_CHANNEL` を登録
+- [x] ワークフローの手動実行（`workflow_dispatch`）対応
+- [x] `dedup_store.json` の永続化（`actions/cache` で実行間の引き継ぎ）
+- [x] Webビューデプロイ後にSlack投稿する順序に変更（prepare → deploy → post）
 
 #### CI/CD
 - [ ] PR時の自動コードレビュー（`/code-review` をGitHub Actionsで実行）
-- [ ] PR時のテスト・ビルド自動実行
+- [x] PR時のテスト・ビルド自動実行（`.github/workflows/ci.yml`）
 
 #### Dockerfile本番化
-- [ ] 非rootユーザーでのコンテナ実行
-- [ ] 本番用ビルド最適化（不要なdevDependencies除外）
+- [x] 非rootユーザーでのコンテナ実行
+- [x] マルチステージビルド（本番用devDependencies除外）
 
 #### Phase 2 レビューからの持ち越し
-- [ ] dedup.tsのユニットテスト追加
-- [ ] retryテストのfake timer化（`vi.useFakeTimers()`）
+- [x] dedup.tsのユニットテスト追加
+- [x] retryテストのfake timer化（`vi.useFakeTimers()`）
 - [ ] ESLint導入
+
+#### 「もっと見る」Webビュー
+- [x] `src/web/generator.ts` で静的HTML生成（`docs/daily/{YYYY-MM-DD}/index.html`）
+- [x] Claude APIのレスポンスから全記事のJSON取得（各カテゴリ最大10件）
+- [x] GitHub Pagesでホスティング（`/docs` フォルダ配信）
+- [x] Slack投稿に「もっと見る」リンクを追加
 
 #### 本番検証
 - [ ] 1週間の自動投稿を確認（月〜金の5回）
 - [ ] エラー通知の動作確認（意図的にAPIキーを無効化してテスト）
 - [ ] dedup動作確認（同日2回実行で重複なし）
-
-#### 「もっと見る」Webビュー
-- [ ] `src/web/generator.ts` で静的HTML生成（`docs/daily/{YYYY-MM-DD}/index.html`）
-- [ ] Claude APIのレスポンスから全記事のJSON取得（各カテゴリ最大10件）
-- [ ] GitHub Pagesでホスティング
-- [ ] Slack投稿に「もっと見る」リンクを追加
 
 ### スコープ外（将来検討）
 - Slackコマンド対応（双方向通信）
@@ -48,18 +49,38 @@
 
 ## 完了条件
 
-- [ ] GitHub Actions cronで毎朝9時に自動投稿される
+- [x] GitHub Actions cronで毎朝9時に自動投稿される（月〜金）
 - [ ] 1週間の本番稼働で障害なし
-- [ ] PR作成時にテスト・ビルド・コードレビューが自動実行される
-- [ ] `develop` → `main` へのマージが完了し、本番ブランチが稼働状態
+- [x] PR作成時にテスト・ビルドが自動実行される
+- [x] `develop` → `main` へのマージが完了し、本番ブランチが稼働状態
+
+## 対応済みの不具合修正
+
+- actions/cacheキーに`run_id`を含めて毎回更新されるよう修正
+- ワークフローに`permissions: contents: read/write`を追加
+- Deployステップにtimeout-minutes: 2を追加（ハング防止）
+- Webビューデプロイ完了後にSlack投稿する順序に修正
+- postモードで`ANTHROPIC_API_KEY`不要に修正
+- Claude APIのJSON出力パース改善（```json囲み対応）
+
+## 成果物
+
+| ファイル | 内容 |
+|---|---|
+| `.github/workflows/daily-post.yml` | 毎朝自動投稿（prepare → deploy → post） |
+| `.github/workflows/ci.yml` | PR時テスト・ビルド |
+| `Dockerfile` | マルチステージビルド・非rootユーザー |
+| `src/web/generator.ts` | 静的HTML Webビュー生成 |
+| `src/__tests__/dedup.test.ts` | dedupユニットテスト |
 
 ## 技術的な判断事項
 
 | 項目 | 方針 |
 |---|---|
-| cron実行環境 | GitHub Actions（無料枠: 月2,000分） |
+| cron実行環境 | GitHub Actions（月〜金のみ、無料枠: 月2,000分） |
 | Secrets管理 | GitHub Secrets |
-| 自動コードレビュー | GitHub ActionsからClaude Code `/code-review` を実行 |
+| 処理順序 | prepare（要約+HTML生成）→ deploy（git push）→ post（Slack投稿） |
+| Webビュー配信 | GitHub Pages（mainブランチ /docs フォルダ） |
 
 ## 参照
 

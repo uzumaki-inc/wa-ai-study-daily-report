@@ -1,0 +1,36 @@
+name: Daily AI News Post
+
+on:
+  schedule:
+    - cron: '0 0 * * *' # UTC 00:00 = JST 09:00
+  workflow_dispatch: # 手動実行対応
+
+env:
+  TZ: Asia/Tokyo
+
+jobs:
+  post:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - run: npm ci
+
+      # dedup_store.json をキャッシュから復元
+      - uses: actions/cache@v4
+        with:
+          path: dedup_store.json
+          key: dedup-store-${{ github.ref_name }}
+          restore-keys: |
+            dedup-store-
+
+      - run: npm run post:now
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          SLACK_CHANNEL: ${{ secrets.SLACK_CHANNEL }}

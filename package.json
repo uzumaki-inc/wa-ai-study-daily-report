@@ -8,9 +8,14 @@
     "build": "tsc",
     "start": "node dist/index.js",
     "post:now": "ts-node src/index.ts",
-    "test": "echo \"No tests yet\" && exit 0"
+    "test": "vitest run"
   },
-  "keywords": ["ai", "slack", "rss", "news"],
+  "keywords": [
+    "ai",
+    "slack",
+    "rss",
+    "news"
+  ],
   "license": "MIT",
   "dependencies": {
     "@anthropic-ai/sdk": "^0.39.0",
@@ -20,6 +25,7 @@
   "devDependencies": {
     "@types/node": "^22.0.0",
     "ts-node": "^10.9.2",
-    "typescript": "^5.7.0"
+    "typescript": "^5.7.0",
+    "vitest": "^4.1.2"
   }
 }

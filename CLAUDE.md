@@ -11,6 +11,11 @@ RSS → Claude API要約 → Slack投稿。GitHub Actions cronで自動実行。
 ## 開発コマンド
 
 ```bash
+# Docker経由（推奨）
+docker compose run --rm app       # 手動即時実行（実行後コンテナ削除）
+docker compose build app          # Dockerイメージをビルド
+
+# ローカル直接実行
 npm install          # 依存関係インストール
 npm run dev          # 開発モード
 npm run build        # ビルド

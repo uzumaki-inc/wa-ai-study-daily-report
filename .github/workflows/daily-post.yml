@@ -2,7 +2,7 @@ name: Daily AI News Post
 
 on:
   schedule:
-    - cron: '0 0 * * *' # UTC 00:00 = JST 09:00（cron自体はUTC固定）
+    - cron: '0 0 * * 1-5' # UTC 00:00 = JST 09:00 月〜金のみ（cron自体はUTC固定）
   workflow_dispatch: # 手動実行対応
 
 permissions:

@@ -1,6 +1,7 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { Article } from '../types';
 import { Config } from '../config';
+import { withRetry } from '../utils/retry';
 
 function buildPrompt(articles: Article[]): string {
   const today = new Date();
@@ -57,16 +58,20 @@ export async function summarizeArticles(
 
   console.log(`[Claude] ${articles.length}件の記事を要約中...`);
 
-  const message = await client.messages.create({
-    model: config.anthropic.model,
-    max_tokens: 4096,
-    messages: [
-      {
-        role: 'user',
-        content: prompt,
-      },
-    ],
-  });
+  const message = await withRetry(
+    () =>
+      client.messages.create({
+        model: config.anthropic.model,
+        max_tokens: 4096,
+        messages: [
+          {
+            role: 'user',
+            content: prompt,
+          },
+        ],
+      }),
+    'Claude API'
+  );
 
   const textBlock = message.content.find((block) => block.type === 'text');
   if (!textBlock || textBlock.type !== 'text') {

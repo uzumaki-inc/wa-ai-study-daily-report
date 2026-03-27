@@ -18,7 +18,7 @@ const DEFAULT_FEEDS: FeedConfig[] = [
   { url: 'https://gigazine.net/news/rss_atom/', lang: 'ja' },
 ];
 
-function parseFeeds(raw: string): FeedConfig[] {
+export function parseFeeds(raw: string): FeedConfig[] {
   return raw.split(',').map((entry) => {
     const trimmed = entry.trim();
     // Format: "url|lang" or just "url" (defaults to 'en')
@@ -53,6 +53,7 @@ export function loadConfig() {
       ? parseFeeds(process.env.RSS_FEED_URLS)
       : DEFAULT_FEEDS,
     maxArticlesPerFeed: parseInt(process.env.MAX_ARTICLES_PER_FEED || '10', 10),
+    maxArticlesTotal: parseInt(process.env.MAX_ARTICLES_TOTAL || '50', 10),
   };
 }
 

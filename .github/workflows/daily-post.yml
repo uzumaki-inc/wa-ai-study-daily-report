@@ -34,14 +34,16 @@ jobs:
             dedup-store-${{ github.ref_name }}-
             dedup-store-
 
-      - run: npm run post:now
+      # Step 1: RSS取得 → Claude要約 → Webビュー生成（Slack投稿はまだしない）
+      - name: Prepare news summary
+        run: npm run prepare:news
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
           SLACK_CHANNEL: ${{ secrets.SLACK_CHANNEL }}
           PAGES_BASE_URL: https://uzumaki-inc.github.io/wa-ai-study-daily-report
 
-      # 生成されたWebビューをコミット・push
+      # Step 2: 生成されたWebビューをコミット・push（GitHub Pages配信）
       - name: Deploy web view to GitHub Pages
         timeout-minutes: 2
         run: |
@@ -58,3 +60,10 @@ jobs:
           else
             echo "Webビューが生成されなかったため、デプロイをスキップ"
           fi
+
+      # Step 3: Webビューがデプロイされた後にSlack投稿
+      - name: Post to Slack
+        run: npm run post:slack
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          SLACK_CHANNEL: ${{ secrets.SLACK_CHANNEL }}

@@ -8,6 +8,8 @@
     "build": "tsc",
     "start": "node dist/index.js",
     "post:now": "ts-node src/index.ts",
+    "prepare:news": "ts-node src/index.ts prepare",
+    "post:slack": "ts-node src/index.ts post",
     "test": "vitest run"
   },
   "keywords": [

@@ -43,13 +43,18 @@ jobs:
 
       # 生成されたWebビューをコミット・push
       - name: Deploy web view to GitHub Pages
+        timeout-minutes: 2
         run: |
-          if [ -d "docs/daily" ]; then
+          if [ -d "docs/daily" ] && [ "$(ls -A docs/daily/)" ]; then
             git config user.name "github-actions[bot]"
             git config user.email "github-actions[bot]@users.noreply.github.com"
             git add docs/daily/
-            git diff --staged --quiet || git commit -m "docs: AIニュース $(date +%Y-%m-%d) のWebビューを追加"
-            git push
+            if ! git diff --staged --quiet; then
+              git commit -m "docs: AIニュース $(date +%Y-%m-%d) のWebビューを追加"
+              git push
+            else
+              echo "変更なし。デプロイをスキップ"
+            fi
           else
             echo "Webビューが生成されなかったため、デプロイをスキップ"
           fi

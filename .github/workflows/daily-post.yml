@@ -2,8 +2,11 @@ name: Daily AI News Post
 
 on:
   schedule:
-    - cron: '0 0 * * *' # UTC 00:00 = JST 09:00
+    - cron: '0 0 * * *' # UTC 00:00 = JST 09:00（cron自体はUTC固定）
   workflow_dispatch: # 手動実行対応
+
+permissions:
+  contents: read
 
 env:
   TZ: Asia/Tokyo
@@ -25,8 +28,9 @@ jobs:
       - uses: actions/cache@v4
         with:
           path: dedup_store.json
-          key: dedup-store-${{ github.ref_name }}
+          key: dedup-store-${{ github.ref_name }}-${{ github.run_id }}
           restore-keys: |
+            dedup-store-${{ github.ref_name }}-
             dedup-store-
 
       - run: npm run post:now

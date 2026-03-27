@@ -54,6 +54,7 @@ export function loadConfig() {
       : DEFAULT_FEEDS,
     maxArticlesPerFeed: parseInt(process.env.MAX_ARTICLES_PER_FEED || '10', 10),
     maxArticlesTotal: parseInt(process.env.MAX_ARTICLES_TOTAL || '50', 10),
+    pagesBaseUrl: process.env.PAGES_BASE_URL || 'https://uzumaki-inc.github.io/wa-ai-study-daily-report',
   };
 }
 

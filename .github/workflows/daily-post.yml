@@ -6,7 +6,8 @@ on:
   workflow_dispatch: # 手動実行対応
 
 permissions:
-  contents: read
+  contents: write
+  pages: write
 
 env:
   TZ: Asia/Tokyo
@@ -38,3 +39,17 @@ jobs:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
           SLACK_CHANNEL: ${{ secrets.SLACK_CHANNEL }}
+          PAGES_BASE_URL: https://uzumaki-inc.github.io/wa-ai-study-daily-report
+
+      # 生成されたWebビューをコミット・push
+      - name: Deploy web view to GitHub Pages
+        run: |
+          if [ -d "docs/daily" ]; then
+            git config user.name "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            git add docs/daily/
+            git diff --staged --quiet || git commit -m "docs: AIニュース $(date +%Y-%m-%d) のWebビューを追加"
+            git push
+          else
+            echo "Webビューが生成されなかったため、デプロイをスキップ"
+          fi

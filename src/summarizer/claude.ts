@@ -3,7 +3,23 @@ import { Article } from '../types';
 import { Config } from '../config';
 import { withRetry } from '../utils/retry';
 
-function buildPrompt(articles: Article[]): string {
+export type CategoryArticle = {
+  title: string;
+  url: string;
+  source: string;
+  lang: 'en' | 'ja';
+};
+
+export type CategorizedArticles = {
+  [key: string]: CategoryArticle[];
+};
+
+export type SummaryResult = {
+  slackText: string;
+  allArticles: CategorizedArticles;
+};
+
+function buildPrompt(articles: Article[], moreUrl: string): string {
   const today = new Date();
   const days = ['日', '月', '火', '水', '木', '金', '土'];
   const dateStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
@@ -17,7 +33,7 @@ function buildPrompt(articles: Article[]): string {
     .join('\n\n');
 
   return `あなたはAI・テクノロジー分野の専門ニュースキュレーターです。
-以下の記事リストを読んで、5つのカテゴリに分類し、各カテゴリから上位2件を選んで日本語の日報を作成してください。
+以下の記事リストを読んで、5つのカテゴリに分類し、2つの出力を生成してください。
 
 【カテゴリ（この順序で出力）】
 1. 🔥 Xで話題 — SNS（特にX）でバズっているAI関連トピック
@@ -26,7 +42,8 @@ function buildPrompt(articles: Article[]): string {
 4. 📝 ブログ記事 — 日本語の技術ブログ記事（Zenn, Qiita等）
 5. 💬 その他話題のニュース — 上記に分類されないAI関連の重要ニュース
 
-【出力フォーマット（Slack mrkdwn形式）】
+【出力1: Slack投稿テキスト（各カテゴリ上位2件）】
+<SLACK>
 📰 *今日のAIニュース*
 ${dateStr}（${dayOfWeek}）
 
@@ -34,10 +51,32 @@ ${dateStr}（${dayOfWeek}）
 • {記事タイトル — 日本語（短く簡潔に）}
   <{記事URL}|{ソースドメイン名}> {英語記事の場合: ｜ <{Google翻訳URL}|日本語で読む>}
 
-（各カテゴリについて繰り返し。カテゴリ間に --- 区切り線は入れない）
+（各カテゴリ2件ずつ。カテゴリ間に --- 区切り線は入れない）
+（各カテゴリの最後に以下を追加）
+＋ <${moreUrl}#{カテゴリキー}|もっと見る>
+</SLACK>
+
+【出力2: 全記事JSON（各カテゴリ最大10件）】
+<ARTICLES_JSON>
+{
+  "x_trending": [{"title": "...", "url": "...", "source": "...", "lang": "en"}],
+  "anthropic": [...],
+  "model_tech": [...],
+  "blog_ja": [...],
+  "other": [...]
+}
+</ARTICLES_JSON>
+
+【カテゴリキーの対応】
+- 🔥 Xで話題 → x_trending
+- 🟠 Anthropic → anthropic
+- 🧠 モデル・技術 → model_tech
+- 📝 ブログ記事 → blog_ja
+- 💬 その他話題のニュース → other
 
 【選定基準】
-- 各カテゴリ内で最もインパクトの大きい2件を選ぶ
+- 各カテゴリ内で最もインパクトの大きい順に並べる
+- Slack投稿には各カテゴリ上位2件のみ、JSONには最大10件
 - 記事タイトルは日本語に翻訳する（英語のままにしない）
 - 要約は不要。タイトルとリンクのみ出力する
 - タイトルは短く簡潔にする（1行に収まる長さ）
@@ -49,12 +88,45 @@ ${dateStr}（${dayOfWeek}）
 ${articleList}`;
 }
 
+function extractJson(raw: string): string {
+  // ```json ... ``` で囲まれている場合を除去
+  let cleaned = raw.trim();
+  cleaned = cleaned.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '');
+  return cleaned;
+}
+
+function parseResponse(text: string): SummaryResult {
+  const slackMatch = text.match(/<SLACK>([\s\S]*?)<\/SLACK>/);
+  const jsonMatch = text.match(/<ARTICLES_JSON>([\s\S]*?)<\/ARTICLES_JSON>/);
+
+  const slackText = slackMatch ? slackMatch[1].trim() : text;
+
+  let allArticles: CategorizedArticles = {};
+  if (jsonMatch) {
+    try {
+      allArticles = JSON.parse(extractJson(jsonMatch[1]));
+    } catch (e) {
+      console.warn('[Claude] 全記事JSONのパースに失敗。Webビュー生成をスキップします');
+      console.warn('[Claude] JSON内容:', jsonMatch[1].slice(0, 200));
+    }
+  } else {
+    console.warn('[Claude] ARTICLES_JSONタグが見つかりません');
+  }
+
+  return { slackText, allArticles };
+}
+
 export async function summarizeArticles(
   articles: Article[],
   config: Config
-): Promise<string> {
+): Promise<SummaryResult> {
   const client = new Anthropic({ apiKey: config.anthropic.apiKey });
-  const prompt = buildPrompt(articles);
+
+  const today = new Date();
+  const dateStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+  const moreUrl = `${config.pagesBaseUrl}/daily/${dateStr}/`;
+
+  const prompt = buildPrompt(articles, moreUrl);
 
   console.log(`[Claude] ${articles.length}件の記事を要約中...`);
 
@@ -62,7 +134,7 @@ export async function summarizeArticles(
     () =>
       client.messages.create({
         model: config.anthropic.model,
-        max_tokens: 4096,
+        max_tokens: 8192,
         messages: [
           {
             role: 'user',
@@ -79,5 +151,5 @@ export async function summarizeArticles(
   }
 
   console.log('[Claude] 要約完了');
-  return textBlock.text;
+  return parseResponse(textBlock.text);
 }

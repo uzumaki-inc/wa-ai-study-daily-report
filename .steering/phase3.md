@@ -36,8 +36,13 @@
 - [ ] エラー通知の動作確認（意図的にAPIキーを無効化してテスト）
 - [ ] dedup動作確認（同日2回実行で重複なし）
 
+#### 「もっと見る」Webビュー
+- [ ] `src/web/generator.ts` で静的HTML生成（`docs/daily/{YYYY-MM-DD}/index.html`）
+- [ ] Claude APIのレスポンスから全記事のJSON取得（各カテゴリ最大10件）
+- [ ] GitHub Pagesでホスティング
+- [ ] Slack投稿に「もっと見る」リンクを追加
+
 ### スコープ外（将来検討）
-- 「もっと見る」Webビュー生成（GitHub Pages）
 - Slackコマンド対応（双方向通信）
 - ニュースのパーソナライズ
 

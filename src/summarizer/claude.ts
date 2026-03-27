@@ -2,6 +2,7 @@ import Anthropic from '@anthropic-ai/sdk';
 import { Article } from '../types';
 import { Config } from '../config';
 import { withRetry } from '../utils/retry';
+import { todayWithDayJST } from '../utils/date';
 
 export type CategoryArticle = {
   title: string;
@@ -20,10 +21,7 @@ export type SummaryResult = {
 };
 
 function buildPrompt(articles: Article[], moreUrl: string): string {
-  const today = new Date();
-  const days = ['日', '月', '火', '水', '木', '金', '土'];
-  const dateStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
-  const dayOfWeek = days[today.getDay()];
+  const { dateStr, dayOfWeek } = todayWithDayJST();
 
   const articleList = articles
     .map(
@@ -122,8 +120,7 @@ export async function summarizeArticles(
 ): Promise<SummaryResult> {
   const client = new Anthropic({ apiKey: config.anthropic.apiKey });
 
-  const today = new Date();
-  const dateStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+  const { dateStr } = todayWithDayJST();
   const moreUrl = `${config.pagesBaseUrl}/daily/${dateStr}/`;
 
   const prompt = buildPrompt(articles, moreUrl);

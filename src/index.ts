@@ -133,8 +133,10 @@ const fn =
   mode === 'dry-run' ? dryrun :
   run;
 
-fn().catch(async (error) => {
-  console.error('[ERROR]', error.message || error);
-  await notifyError(error);
-  process.exit(1);
-});
+fn()
+  .then(() => process.exit(0))
+  .catch(async (error) => {
+    console.error('[ERROR]', error.message || error);
+    await notifyError(error);
+    process.exit(1);
+  });

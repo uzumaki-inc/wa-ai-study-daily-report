@@ -10,47 +10,51 @@
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                     Scheduler (cron)                        │
-│                   毎朝 09:00 JST 発火                        │
+│                GitHub Actions (cron)                         │
+│              月〜金 09:00 JST 発火                            │
 └────────────────────────┬────────────────────────────────────┘
                          │
                          ▼
 ┌─────────────────────────────────────────────────────────────┐
-│                   RSS Fetcher                               │
-│  ・複数のRSSフィードURLから記事を取得                           │
-│  ・取得済み記事URL（dedup store）と照合し、新着のみ抽出          │
-│  ・記事タイトル・URL・本文スニペット・公開日時を構造化            │
+│              Step 1: prepare（npm run prepare:news）          │
+│  ・RSS Fetcher: 複数フィードを並列取得                         │
+│  ・Dedup: 投稿済みURL照合 → 新着のみ抽出（上限50件）            │
+│  ・Summarizer: Claude APIで5カテゴリ分類                       │
+│  ・Web Generator: 静的HTML生成（もっと見る）                    │
+│  ・結果を .slack-pending.json に保存                           │
 └────────────────────────┬────────────────────────────────────┘
-                         │ 新着記事リスト
+                         │
                          ▼
 ┌─────────────────────────────────────────────────────────────┐
-│                   Summarizer (Claude API)                   │
-│  ・記事リストをClaude APIに渡し、日本語で要約                   │
-│  ・プロンプトテンプレートで出力形式を統一                        │
-│  ・使用モデル: claude-sonnet-4-6（設定で変更可）                │
+│              Step 2: deploy                                  │
+│  ・docs/daily/{YYYY-MM-DD}/index.html を git push             │
+│  ・GitHub Pages に自動配信                                    │
 └────────────────────────┬────────────────────────────────────┘
-                         │ 要約テキスト（Slack Block Kit形式）
+                         │
                          ▼
 ┌─────────────────────────────────────────────────────────────┐
-│                   Slack Poster                              │
-│  ・Incoming Webhookでチャンネルに投稿                          │
+│              Step 3: post（npm run post:slack）               │
+│  ・.slack-pending.json からテキスト読み込み                     │
+│  ・Incoming Webhook でSlackに投稿                             │
 │  ・投稿成功後、記事URLをdedup storeに記録                       │
 └─────────────────────────────────────────────────────────────┘
 ```
+
+**ローカル実行**: `npm run post:now`（または `docker compose run --rm app`）で Step 1〜3 を一括実行。
 
 ---
 
 ## データフロー詳細
 
-### 1. RSS取得フェーズ
+### 1. RSS取得
 
-**入力**: 環境変数 `RSS_FEED_URLS`（カンマ区切りのURL群）
+**入力**: 環境変数 `RSS_FEED_URLS`（カンマ区切り）またはデフォルトフィード10件
 
 **処理**:
-1. 各RSSフィードを並列取得
-2. `dedup_store.json`（または軽量DB）に記録済みのURLと照合
-3. 新着記事のみ抽出（最大件数は設定で制御、デフォルト10件）
-4. 公開日時でソート（新しい順）
+1. 各RSSフィードを `Promise.allSettled` で並列取得（1件失敗しても続行）
+2. `dedup_store.json` に記録済みのURLと照合し、新着のみ抽出
+3. 公開日時でソート（新しい順）
+4. `MAX_ARTICLES_TOTAL`（デフォルト50件）で上限制限
 
 **出力**: `Article[]`
 
@@ -58,120 +62,108 @@
 type Article = {
   title: string;
   url: string;
-  summary: string;      // RSSのdescriptionフィールド
+  summary: string;      // RSSのdescriptionフィールド（HTMLタグ除去、500文字制限）
   publishedAt: Date;
-  source: string;       // フィードのホスト名
-  lang: 'en' | 'ja';   // ソースフィードの言語
-  category?: Category;  // Claude APIが分類
+  source: string;        // フィードのホスト名
+  lang: 'en' | 'ja';
+  category?: Category;
 };
 
-type Category =
-  | 'x_trending'   // 🔥 Xで話題
-  | 'anthropic'    // 🟠 Anthropic
-  | 'model_tech'   // 🧠 モデル・技術
-  | 'blog_ja'      // 📝 ブログ記事（日本語限定）
-  | 'other';       // 💬 その他話題のニュース
+type Category = 'x_trending' | 'anthropic' | 'model_tech' | 'blog_ja' | 'other';
 ```
 
 ---
 
-### 2. 要約フェーズ
+### 2. 要約（Claude API）
 
 **入力**: `Article[]`
+**使用モデル**: `claude-sonnet-4-6`（環境変数 `ANTHROPIC_MODEL` で変更可）
+**リトライ**: 指数バックオフ、最大3回
 
-**プロンプトテンプレート**:
+**プロンプト出力**: 2系統
+
+#### 出力1: Slack投稿テキスト（各カテゴリ上位2件）
 
 ```
-あなたはAI・テクノロジー分野の専門ニュースキュレーターです。
-以下の記事リストを読んで、5つのカテゴリに分類し、各カテゴリから上位2件を選んで日本語の日報を作成してください。
-
-【カテゴリ（この順序で出力）】
-1. 🔥 Xで話題 — SNS（特にX）でバズっているAI関連トピック
-2. 🟠 Anthropic — Anthropic社に関するニュース（製品・訴訟・研究）
-3. 🧠 モデル・技術 — 新モデルリリース、技術的ブレイクスルー
-4. 📝 ブログ記事 — 日本語の技術ブログ記事（Zenn, Qiita等）
-5. 💬 その他話題のニュース — 上記に分類されないAI関連の重要ニュース
-
-【出力フォーマット（Slack mrkdwn形式）】
 📰 *今日のAIニュース*
-{date}（{曜日}）｜ 各カテゴリ厳選 2 件
+{YYYY-MM-DD}（{曜日}）
 
 {カテゴリ名}
-• *{記事タイトル — 日本語}*
-  {2〜3文の要約。日本語で。}
-  🔗 {ソースドメイン名} {英語記事の場合: ｜ 🇯🇵 日本語で読む {Google翻訳URL}}
+• {記事タイトル — 日本語（短く簡潔に）}
+  <{記事URL}|{ソースドメイン名}> {英語記事の場合: ｜ <{Google翻訳URL}|日本語で読む>}
 
-＋ もっと見る（10件） {カテゴリ詳細ページURL}
-
-（各カテゴリについて繰り返し）
-
----
-毎朝9時自動投稿 ｜ Powered by Claude API
-
-【選定基準】
-- 各カテゴリ内で最もインパクトの大きい2件を選ぶ
-- 記事タイトルは日本語に翻訳する（英語のままにしない）
-- 要約は技術者が読んで価値を感じる内容に絞る
-- ブログ記事カテゴリは日本語ソースのみから選定する
-
-【記事リスト】
-{articles}
+＋ <{もっと見るURL}#{カテゴリキー}|もっと見る>
 ```
 
-**出力**:
-1. Slack投稿用テキスト（各カテゴリ上位2件）
-2. カテゴリ別全記事リスト（各カテゴリ最大10件 → Webビュー用JSON）
+#### 出力2: 全記事JSON（各カテゴリ最大10件）
+
+```json
+{
+  "x_trending": [{"title": "...", "url": "...", "source": "...", "lang": "en"}],
+  "anthropic": [...],
+  "model_tech": [...],
+  "blog_ja": [...],
+  "other": [...]
+}
+```
+
+**カテゴリ定義**:
+
+| カテゴリ | キー | 内容 | ソース制限 |
+|---|---|---|---|
+| 🔥 Xで話題 | `x_trending` | SNS（特にX）でバズっているAI関連トピック | なし |
+| 🟠 Anthropic | `anthropic` | Anthropic社に関するニュース | なし |
+| 🧠 モデル・技術 | `model_tech` | 新モデルリリース、技術的ブレイクスルー | なし |
+| 📝 ブログ記事 | `blog_ja` | 技術ブログ記事 | **日本語ソースのみ** |
+| 💬 その他話題のニュース | `other` | 上記に分類されないAI関連ニュース | なし |
+
+**選定基準**:
+- 各カテゴリ内でインパクトの大きい順に並べる
+- 記事タイトルは日本語に翻訳する（英語のままにしない）
+- 要約は不要。タイトルとリンクのみ
+- タイトルは短く簡潔に（1行に収まる長さ）
+- 該当する記事がないカテゴリはスキップ可
 
 ---
 
-### 3. Webビュー生成フェーズ（「もっと見る」ページ）
+### 3. Webビュー生成（「もっと見る」ページ）
 
-Claude APIから返された全記事（各カテゴリ最大10件）を静的HTMLとして生成し、
-GitHub Pages（または同等のホスティング）にデプロイする。
+Claude APIの全記事JSON（各カテゴリ最大10件）から静的HTMLを生成。
+
+**出力先**: `docs/daily/{YYYY-MM-DD}/index.html`
 
 **URL構成**:
 ```
-https://{username}.github.io/{repo-name}/daily/{YYYY-MM-DD}/
-https://{username}.github.io/{repo-name}/daily/{YYYY-MM-DD}/#x_trending
-https://{username}.github.io/{repo-name}/daily/{YYYY-MM-DD}/#anthropic
-https://{username}.github.io/{repo-name}/daily/{YYYY-MM-DD}/#model_tech
-https://{username}.github.io/{repo-name}/daily/{YYYY-MM-DD}/#blog_ja
-https://{username}.github.io/{repo-name}/daily/{YYYY-MM-DD}/#other
+https://uzumaki-inc.github.io/wa-ai-study-daily-report/daily/{YYYY-MM-DD}/
+https://uzumaki-inc.github.io/wa-ai-study-daily-report/daily/{YYYY-MM-DD}/#{カテゴリキー}
 ```
 
-**生成フロー**:
-1. Claude APIのレスポンスから全記事のJSONを取得
-2. HTMLテンプレートにJSONを埋め込み、静的HTMLを `docs/daily/{YYYY-MM-DD}/index.html` に生成
-3. GitHub Actions の push で GitHub Pages に自動デプロイ
+**HTML仕様**:
+- レスポンシブデザイン（max-width: 700px）
+- カテゴリごとに `<section id="{カテゴリキー}">` で区切り
+- 英語記事にはGoogle翻訳リンクを付与
+- XSS対策: URLスキーム検証（http/httpsのみ）、HTMLエスケープ
 
-**Slack上の「もっと見る」リンク**:
-```
-＋ もっと見る（10件） → https://{pages-url}/daily/2026-03-26/#x_trending
-```
+**デプロイ**: GitHub Actionsで `docs/daily/` を `main` にコミット・push → GitHub Pages自動配信
 
 ---
 
-### 4. Slack投稿フェーズ
-
-**入力**: 整形済みテキスト
+### 4. Slack投稿
 
 **投稿仕様**:
 - チャンネル: 環境変数 `SLACK_CHANNEL`
-- 形式: Slack Block Kit（リッチフォーマット）
+- 形式: Slack Block Kit（section + context）
 - 投稿ユーザー名: `AI News Bot`
 - アイコン: `:newspaper:`
+- リトライ: 指数バックオフ、最大3回（最終失敗時はローカルログに保存）
 
 **Block Kit構成**:
 
 ```json
 [
   {
-    "type": "header",
-    "text": { "type": "plain_text", "text": "📰 今日のAIニュース" }
-  },
-  {
     "type": "section",
-    "text": { "type": "mrkdwn", "text": "{要約テキスト}" }
+    "text": { "type": "mrkdwn", "text": "{Claude APIが生成したSlackテキスト}" }
   },
   {
     "type": "context",
@@ -182,29 +174,40 @@ https://{username}.github.io/{repo-name}/daily/{YYYY-MM-DD}/#other
 ]
 ```
 
+テキストが3000文字を超える場合、改行位置で分割して複数のsectionブロックにする。
+
+---
+
+## 翻訳リンク仕様
+
+英語記事にはGoogle翻訳経由の日本語リンクを自動付与する。
+
+| フィードの `lang` | Slack表示 | Webビュー表示 |
+|---|---|---|
+| `en` | `<元URL\|ドメイン> ｜ <翻訳URL\|日本語で読む>` | 元URLリンク + 「日本語で読む」リンク |
+| `ja` | `<元URL\|ドメイン>` のみ | 元URLリンクのみ |
+
+**翻訳URL生成**: `https://translate.google.com/translate?sl=en&tl=ja&u={元のURL}`
+
 ---
 
 ## 重複排除（Dedup）設計
 
-投稿済み記事の重複投稿を防ぐためのストア。
-
-**実装候補**:
-- `dedup_store.json`（ローカルファイル、シンプル）
-- SQLite（軽量DB、永続性が高い）
+**ストア**: `dedup_store.json`（ファイルベース、メモリキャッシュ付き）
+**ストアパス**: 環境変数 `DEDUP_STORE_PATH`（デフォルト: `./dedup_store.json`）
+**GitHub Actions永続化**: `actions/cache` で実行間の引き継ぎ
 
 **データ構造**:
 
 ```json
 {
   "posted_urls": [
-    "https://techcrunch.com/...",
-    "https://venturebeat.com/..."
-  ],
-  "last_run": "2026-03-26T00:00:00Z"
+    { "url": "https://techcrunch.com/...", "posted_at": "2026-03-28T00:00:00Z" }
+  ]
 }
 ```
 
-**TTL（保持期間）**: 30日間（古いURLは削除して肥大化防止）
+**TTL**: 環境変数 `DEDUP_TTL_DAYS`（デフォルト: 30日）。古いエントリは自動削除。
 
 ---
 
@@ -214,12 +217,13 @@ https://{username}.github.io/{repo-name}/daily/{YYYY-MM-DD}/#other
 |---|---|
 | RSS取得失敗（1つ） | スキップして他フィードで続行、ログ記録 |
 | RSS取得全失敗 | Slackにエラー通知して終了 |
-| Claude API失敗 | リトライ3回（指数バックオフ）→失敗時はエラー通知 |
+| Claude API失敗 | リトライ3回（指数バックオフ）→ 失敗時はSlackにエラー通知 |
 | Slack投稿失敗 | リトライ3回 → 失敗時はローカルログに保存 |
+| 任意のエラー | `process.env.SLACK_WEBHOOK_URL` 経由でSlackにエラー通知（loadConfig非依存） |
 
 ---
 
-## 利用するRSSフィード（初期設定候補）
+## 利用するRSSフィード（デフォルト設定）
 
 ### 🇺🇸 英語ソース
 
@@ -239,35 +243,9 @@ https://{username}.github.io/{repo-name}/daily/{YYYY-MM-DD}/#other
 | AINOW | `https://ainow.ai/feed/` | `ja` |
 | AI-SCHOLAR | `https://ai-scholar.tech/feed` | `ja` |
 | Publickey | `https://www.publickey1.jp/atom.xml` | `ja` |
-| Gigazine AI | `https://gigazine.net/news/rss_atom/` | `ja` |
+| Gigazine | `https://gigazine.net/news/rss_atom/` | `ja` |
 
-> フィードURLと言語設定は環境変数 `RSS_FEED_URLS` で上書き可能。
-
----
-
-## 翻訳リンク仕様
-
-英語記事にはGoogle翻訳経由の日本語リンクを自動付与する。
-
-**ルール**:
-- フィードの `lang` が `en` の場合 → 元URLに加えて翻訳リンクを付与
-- フィードの `lang` が `ja` の場合 → 元URLのみ（翻訳リンクなし）
-
-**翻訳URL生成**:
-```
-https://translate.google.com/translate?sl=en&tl=ja&u={元のURL}
-```
-
-**Slack表示例**:
-```
-🔹 OpenAI announces GPT-5 ...
-   要約テキスト ...
-   🔗 techcrunch.com ｜ 🇯🇵 日本語で読む
-
-🔹 ITmedia: 国内AI市場が過去最高に ...
-   要約テキスト ...
-   🔗 itmedia.co.jp
-```
+> フィードURLと言語設定は環境変数 `RSS_FEED_URLS` で上書き可能（`URL|lang` 形式、カンマ区切り）。
 
 ---
 
@@ -278,3 +256,4 @@ https://translate.google.com/translate?sl=en&tl=ja&u={元のURL}
 | 2026-03-26 | 初版作成 | Claude (Cowork) |
 | 2026-03-26 | 日本語RSSソース追加、翻訳リンク仕様追加 | Claude (Cowork) |
 | 2026-03-26 | 5カテゴリ分類プロンプト確定、Webビュー（もっと見る）設計追加 | Claude (Cowork) |
+| 2026-03-28 | 現行コードを正としてドキュメント全面更新。3ステップ処理順序、Block Kit構成、dedup設計、エラーハンドリングを実装に合わせて修正 | Claude (Cowork) |

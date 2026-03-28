@@ -34,7 +34,9 @@ export function extractBlogArticles(
   for (const article of articles) {
     switch (article.feedCategory) {
       case 'blog_hatena':
-        hatena.push(article);
+        if (isAiRelated(article)) {
+          hatena.push(article);
+        }
         break;
       case 'blog_zenn':
         zenn.push(article);

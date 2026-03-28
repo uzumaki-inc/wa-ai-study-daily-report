@@ -19,7 +19,6 @@ const DEFAULT_FEEDS: FeedConfig[] = [
   { url: 'https://gigazine.net/news/rss_atom/', lang: 'ja' },
   // Japanese sources (blog)
   { url: 'https://b.hatena.ne.jp/hotentry/it.rss', lang: 'ja', category: 'blog_hatena' },
-  { url: 'https://b.hatena.ne.jp/search/tag?q=%E4%BA%BA%E5%B7%A5%E7%9F%A5%E8%83%BD&mode=rss', lang: 'ja', category: 'blog_hatena' },
   { url: 'https://zenn.dev/topics/ai/feed', lang: 'ja', category: 'blog_zenn' },
   { url: 'https://note.com/rss', lang: 'ja', category: 'blog_note' },
 ];

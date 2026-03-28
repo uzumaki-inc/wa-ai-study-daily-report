@@ -10,12 +10,15 @@ const DEFAULT_FEEDS: FeedConfig[] = [
   { url: 'https://www.technologyreview.com/feed/', lang: 'en' },
   { url: 'https://www.theverge.com/ai-artificial-intelligence/rss/index.xml', lang: 'en' },
   { url: 'https://www.wired.com/feed/tag/ai/latest/rss', lang: 'en' },
-  // Japanese sources
+  // Japanese sources (news)
   { url: 'https://rss.itmedia.co.jp/rss/2.0/aiplus.xml', lang: 'ja' },
-  { url: 'https://ainow.ai/feed/', lang: 'ja' },
-  { url: 'https://ai-scholar.tech/feed', lang: 'ja' },
   { url: 'https://www.publickey1.jp/atom.xml', lang: 'ja' },
   { url: 'https://gigazine.net/news/rss_atom/', lang: 'ja' },
+  // Japanese sources (blog - はてぶ・Zenn・note)
+  { url: 'https://b.hatena.ne.jp/hotentry/it.rss', lang: 'ja' },
+  { url: 'https://b.hatena.ne.jp/search/tag?q=%E4%BA%BA%E5%B7%A5%E7%9F%A5%E8%83%BD&mode=rss', lang: 'ja' },
+  { url: 'https://zenn.dev/topics/ai/feed', lang: 'ja' },
+  { url: 'https://note.com/rss', lang: 'ja' },
 ];
 
 export function parseFeeds(raw: string): FeedConfig[] {

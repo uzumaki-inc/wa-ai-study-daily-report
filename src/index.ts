@@ -77,6 +77,20 @@ async function post() {
   console.log('完了しました');
 }
 
+async function dryrun() {
+  console.log('=== AI学習日報 Slack Bot [dry-run] ===');
+  console.log(`実行時刻: ${new Date().toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo' })}\n`);
+
+  const result = await prepareCore();
+  if (!result) return;
+
+  console.log('\n--- 要約結果 ---');
+  console.log(result.slackText);
+  console.log('--- ここまで ---\n');
+
+  console.log('[Dry-run] Slack投稿をスキップしました');
+}
+
 async function run() {
   console.log('=== AI学習日報 Slack Bot ===');
   console.log(`実行時刻: ${new Date().toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo' })}\n`);
@@ -113,7 +127,11 @@ async function notifyError(error: unknown) {
 }
 
 const mode = process.argv[2];
-const fn = mode === 'prepare' ? prepare : mode === 'post' ? post : run;
+const fn =
+  mode === 'prepare' ? prepare :
+  mode === 'post' ? post :
+  mode === 'dry-run' ? dryrun :
+  run;
 
 fn().catch(async (error) => {
   console.error('[ERROR]', error.message || error);

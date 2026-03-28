@@ -10,6 +10,7 @@
     "post:now": "ts-node src/index.ts",
     "prepare:news": "ts-node src/index.ts prepare",
     "post:slack": "ts-node src/index.ts post",
+    "dry-run": "ts-node src/index.ts dry-run",
     "test": "vitest run"
   },
   "keywords": [

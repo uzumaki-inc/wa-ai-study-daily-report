@@ -9,6 +9,7 @@ export type CategoryArticle = {
   url: string;
   source: string;
   lang: 'en' | 'ja';
+  summary?: string;
 };
 
 export type CategorizedArticles = {
@@ -37,7 +38,7 @@ function buildPrompt(articles: Article[], moreUrl: string): string {
 1. 🔥 Xで話題 — SNS（特にX）でバズっているAI関連トピック
 2. 🟠 Anthropic — Anthropic社に関するニュース（製品・訴訟・研究）
 3. 🧠 モデル・技術 — 新モデルリリース、技術的ブレイクスルー
-4. 📝 ブログ記事 — 日本語の技術ブログ記事（Zenn, Qiita等）
+4. 📝 ブログ記事 — 日本語の技術ブログ記事（はてなブックマーク・Zenn・note等）
 5. 💬 その他話題のニュース — 上記に分類されないAI関連の重要ニュース
 
 【出力1: Slack投稿テキスト（各カテゴリ上位2件）】
@@ -57,7 +58,7 @@ ${dateStr}（${dayOfWeek}）
 【出力2: 全記事JSON（各カテゴリ最大10件）】
 <ARTICLES_JSON>
 {
-  "x_trending": [{"title": "...", "url": "...", "source": "...", "lang": "en"}],
+  "x_trending": [{"title": "...", "url": "...", "source": "...", "lang": "en", "summary": "2〜3文の日本語要約"}],
   "anthropic": [...],
   "model_tech": [...],
   "blog_ja": [...],
@@ -76,9 +77,11 @@ ${dateStr}（${dayOfWeek}）
 - 各カテゴリ内で最もインパクトの大きい順に並べる
 - Slack投稿には各カテゴリ上位2件のみ、JSONには最大10件
 - 記事タイトルは日本語に翻訳する（英語のままにしない）
-- 要約は不要。タイトルとリンクのみ出力する
+- Slack投稿テキストには要約は不要。タイトルとリンクのみ出力する
+- 全記事JSONには各記事に2〜3文の日本語要約（summary）を必ず含める
 - タイトルは短く簡潔にする（1行に収まる長さ）
-- ブログ記事カテゴリは日本語ソースのみから選定する
+- ブログ記事カテゴリは日本語ソースのみから選定する（はてなブックマーク・Zenn・note等）
+- noteの記事はAI関連のものだけを選定する（note全体RSSからAI記事をフィルタリング）
 - 該当する記事がないカテゴリはスキップしてよい
 - 英語記事のGoogle翻訳URLは https://translate.google.com/translate?sl=en&tl=ja&u={元のURL} の形式で生成する
 

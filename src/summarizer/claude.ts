@@ -89,14 +89,14 @@ ${dateStr}（${dayOfWeek}）
 ${articleList}`;
 }
 
-function extractJson(raw: string): string {
+export function extractJson(raw: string): string {
   // ```json ... ``` で囲まれている場合を除去
   let cleaned = raw.trim();
   cleaned = cleaned.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '');
   return cleaned;
 }
 
-function parseResponse(text: string): SummaryResult {
+export function parseResponse(text: string): SummaryResult {
   const slackMatch = text.match(/<SLACK>([\s\S]*?)<\/SLACK>/);
   const jsonMatch = text.match(/<ARTICLES_JSON>([\s\S]*?)<\/ARTICLES_JSON>/);
 

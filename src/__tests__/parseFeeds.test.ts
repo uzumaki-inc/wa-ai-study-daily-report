@@ -30,4 +30,10 @@ describe('parseFeeds', () => {
     expect(result[0].url).toBe('https://example.com/feed');
     expect(result[0].lang).toBe('ja');
   });
+
+  it('不正なlang値でエラーを投げる', () => {
+    expect(() => parseFeeds('https://example.com/feed|fr')).toThrow(
+      '不正なlang値: "fr"'
+    );
+  });
 });

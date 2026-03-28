@@ -1,19 +1,5 @@
 import { describe, it, expect } from 'vitest';
-
-// generator.ts の escapeHtml と safeUrl をテスト用にインポート
-// 現在 export されていないため、同じロジックをインラインで再現してテスト
-function escapeHtml(text: string): string {
-  return text
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
-}
-
-function safeUrl(url: string): string {
-  return /^https?:\/\//.test(url) ? escapeHtml(url) : '#';
-}
+import { escapeHtml, safeUrl } from '../web/generator';
 
 describe('escapeHtml', () => {
   it('特殊文字をエスケープする', () => {

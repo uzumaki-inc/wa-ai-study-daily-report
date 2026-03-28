@@ -1,29 +1,5 @@
 import { describe, it, expect } from 'vitest';
-
-// claude.ts の parseResponse と extractJson を再現してテスト
-function extractJson(raw: string): string {
-  let cleaned = raw.trim();
-  cleaned = cleaned.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '');
-  return cleaned;
-}
-
-function parseResponse(text: string) {
-  const slackMatch = text.match(/<SLACK>([\s\S]*?)<\/SLACK>/);
-  const jsonMatch = text.match(/<ARTICLES_JSON>([\s\S]*?)<\/ARTICLES_JSON>/);
-
-  const slackText = slackMatch ? slackMatch[1].trim() : text;
-
-  let allArticles: Record<string, unknown[]> = {};
-  if (jsonMatch) {
-    try {
-      allArticles = JSON.parse(extractJson(jsonMatch[1]));
-    } catch {
-      // パース失敗
-    }
-  }
-
-  return { slackText, allArticles };
-}
+import { extractJson, parseResponse } from '../summarizer/claude';
 
 describe('extractJson', () => {
   it('プレーンJSONをそのまま返す', () => {

@@ -26,9 +26,13 @@ export function parseFeeds(raw: string): FeedConfig[] {
     const trimmed = entry.trim();
     // Format: "url|lang" or just "url" (defaults to 'en')
     const [url, lang] = trimmed.split('|');
+    const parsedLang = lang?.trim();
+    if (parsedLang && parsedLang !== 'en' && parsedLang !== 'ja') {
+      throw new Error(`不正なlang値: "${parsedLang}"（"en" または "ja" のみ有効）`);
+    }
     return {
       url: url.trim(),
-      lang: (lang?.trim() as 'en' | 'ja') || 'en',
+      lang: (parsedLang as 'en' | 'ja') || 'en',
     };
   });
 }

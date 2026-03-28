@@ -10,7 +10,7 @@ const CATEGORY_META: { key: string; emoji: string; label: string }[] = [
   { key: 'other', emoji: '💬', label: 'その他話題のニュース' },
 ];
 
-function safeUrl(url: string): string {
+export function safeUrl(url: string): string {
   return /^https?:\/\//.test(url) ? escapeHtml(url) : '#';
 }
 
@@ -29,7 +29,7 @@ function articleToHtml(article: CategoryArticle): string {
 </li>`;
 }
 
-function escapeHtml(text: string): string {
+export function escapeHtml(text: string): string {
   return text
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')

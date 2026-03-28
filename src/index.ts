@@ -8,6 +8,7 @@ import { postToSlack } from './poster/slack';
 import { filterNewArticles, markAsPosted } from './utils/dedup';
 import { generateWebView } from './web/generator';
 import { todayJST } from './utils/date';
+import { extractBlogArticles, blogArticlesToList } from './utils/blog-filter';
 
 const RESULT_PATH = path.join(process.cwd(), '.slack-pending.json');
 
@@ -23,16 +24,24 @@ async function prepareCore(): Promise<PrepareResult | null> {
   const fetchedArticles = await fetchAllFeeds(config.feeds, config.maxArticlesPerFeed);
 
   const newArticles = filterNewArticles(fetchedArticles);
-  const articles = newArticles.slice(0, config.maxArticlesTotal);
-  if (articles.length !== newArticles.length) {
-    console.log(`[Config] 記事数を${newArticles.length}件から${articles.length}件に制限`);
+
+  // ブログ記事を事前に切り出し（はてぶ6・Zenn4・note5）
+  const { blogArticles, newsArticles } = extractBlogArticles(newArticles);
+  const blogList = blogArticlesToList(blogArticles);
+
+  // ニュース記事に件数制限を適用
+  const limitedNews = newsArticles.slice(0, config.maxArticlesTotal);
+  if (limitedNews.length !== newsArticles.length) {
+    console.log(`[Config] ニュース記事数を${newsArticles.length}件から${limitedNews.length}件に制限`);
   }
+
+  const articles = [...limitedNews, ...blogList];
   if (articles.length === 0) {
     console.log('[完了] 新着記事がありません。投稿をスキップします。');
     return null;
   }
 
-  const { slackText, allArticles: categorizedArticles } = await summarizeArticles(articles, config);
+  const { slackText, allArticles: categorizedArticles } = await summarizeArticles(articles, config, blogList);
 
   generateWebView(todayJST(), categorizedArticles);
 

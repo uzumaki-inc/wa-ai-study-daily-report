@@ -1,6 +1,9 @@
+export type FeedCategory = 'news' | 'blog_hatena' | 'blog_zenn' | 'blog_note';
+
 export type FeedConfig = {
   url: string;
   lang: 'en' | 'ja';
+  category?: FeedCategory;
 };
 
 const DEFAULT_FEEDS: FeedConfig[] = [
@@ -14,17 +17,16 @@ const DEFAULT_FEEDS: FeedConfig[] = [
   { url: 'https://rss.itmedia.co.jp/rss/2.0/aiplus.xml', lang: 'ja' },
   { url: 'https://www.publickey1.jp/atom.xml', lang: 'ja' },
   { url: 'https://gigazine.net/news/rss_atom/', lang: 'ja' },
-  // Japanese sources (blog - はてぶ・Zenn・note)
-  { url: 'https://b.hatena.ne.jp/hotentry/it.rss', lang: 'ja' },
-  { url: 'https://b.hatena.ne.jp/search/tag?q=%E4%BA%BA%E5%B7%A5%E7%9F%A5%E8%83%BD&mode=rss', lang: 'ja' },
-  { url: 'https://zenn.dev/topics/ai/feed', lang: 'ja' },
-  { url: 'https://note.com/rss', lang: 'ja' },
+  // Japanese sources (blog)
+  { url: 'https://b.hatena.ne.jp/hotentry/it.rss', lang: 'ja', category: 'blog_hatena' },
+  { url: 'https://b.hatena.ne.jp/search/tag?q=%E4%BA%BA%E5%B7%A5%E7%9F%A5%E8%83%BD&mode=rss', lang: 'ja', category: 'blog_hatena' },
+  { url: 'https://zenn.dev/topics/ai/feed', lang: 'ja', category: 'blog_zenn' },
+  { url: 'https://note.com/rss', lang: 'ja', category: 'blog_note' },
 ];
 
 export function parseFeeds(raw: string): FeedConfig[] {
   return raw.split(',').map((entry) => {
     const trimmed = entry.trim();
-    // Format: "url|lang" or just "url" (defaults to 'en')
     const [url, lang] = trimmed.split('|');
     const parsedLang = lang?.trim();
     if (parsedLang && parsedLang !== 'en' && parsedLang !== 'ja') {
@@ -54,7 +56,6 @@ export function loadConfig() {
     anthropic: {
       apiKey: requireEnv('ANTHROPIC_API_KEY'),
       model: process.env.ANTHROPIC_MODEL || 'claude-sonnet-4-6',
-
     },
     feeds: process.env.RSS_FEED_URLS
       ? parseFeeds(process.env.RSS_FEED_URLS)

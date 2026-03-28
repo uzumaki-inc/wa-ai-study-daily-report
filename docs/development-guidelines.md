@@ -148,7 +148,7 @@ dedup_store.json    # 投稿済みURL記録（ローカルステート）
 | Phase 1: MVP | [.steering/phase1.md](../.steering/phase1.md) | 完了 |
 | Phase 2: 安定化 | [.steering/phase2.md](../.steering/phase2.md) | 完了 |
 | Phase 3: 自動化 | [.steering/phase3.md](../.steering/phase3.md) | 完了 |
-| Phase 4: 改善 | [.steering/phase4.md](../.steering/phase4.md) | 未着手 |
+| Phase 4: 改善 | [.steering/phase4.md](../.steering/phase4.md) | 完了 |
 
 ---
 

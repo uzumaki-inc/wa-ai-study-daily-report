@@ -1,3 +1,5 @@
+import { FeedCategory } from './config';
+
 export type Article = {
   title: string;
   url: string;
@@ -5,4 +7,5 @@ export type Article = {
   publishedAt: Date;
   source: string;
   lang: 'en' | 'ja';
+  feedCategory?: FeedCategory;
 };

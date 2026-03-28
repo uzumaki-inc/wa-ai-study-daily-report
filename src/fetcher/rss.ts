@@ -25,6 +25,7 @@ async function fetchSingleFeed(
       publishedAt: item.pubDate ? new Date(item.pubDate) : new Date(),
       source: hostname,
       lang: feed.lang,
+      feedCategory: feed.category,
     }));
 
   return articles;

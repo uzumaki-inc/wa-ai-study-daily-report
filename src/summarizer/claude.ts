@@ -21,13 +21,21 @@ export type SummaryResult = {
   allArticles: CategorizedArticles;
 };
 
-function buildPrompt(articles: Article[], moreUrl: string): string {
+function buildPrompt(articles: Article[], moreUrl: string, blogArticles?: Article[]): string {
   const { dateStr, dayOfWeek } = todayWithDayJST();
 
-  const articleList = articles
+  const newsOnly = articles.filter((a) => !a.feedCategory?.startsWith('blog_'));
+  const articleList = newsOnly
     .map(
       (a, i) =>
         `${i + 1}. [${a.lang}] ${a.title}\n   URL: ${a.url}\n   Source: ${a.source}\n   Summary: ${a.summary.slice(0, 200)}`
+    )
+    .join('\n\n');
+
+  const blogList = (blogArticles || [])
+    .map(
+      (a, i) =>
+        `${i + 1}. [${a.feedCategory}] ${a.title}\n   URL: ${a.url}\n   Source: ${a.source}\n   Summary: ${a.summary.slice(0, 200)}`
     )
     .join('\n\n');
 
@@ -76,18 +84,20 @@ ${dateStr}（${dayOfWeek}）
 【選定基準】
 - 各カテゴリ内で最もインパクトの大きい順に並べる
 - Slack投稿には各カテゴリ上位2件のみ
-- JSONには最大10件。ただしブログ記事カテゴリは15件（はてぶ6件・Zenn4件・note5件を目安に選定）
+- JSONには最大10件（ブログ記事カテゴリは下記の「ブログ記事リスト」の全件をそのまま使う）
 - 記事タイトルは日本語に翻訳する（英語のままにしない）
 - Slack投稿テキストには要約は不要。タイトルとリンクのみ出力する
 - 全記事JSONには各記事に2〜3文の日本語要約（summary）を必ず含める
 - タイトルは短く簡潔にする（1行に収まる長さ）
-- ブログ記事カテゴリは日本語ソースのみから選定する（はてなブックマーク・Zenn・note等）
-- noteの記事はAI関連のものだけを選定する（note全体RSSからAI記事をフィルタリング）
+- 📝 ブログ記事カテゴリは「ブログ記事リスト」からのみ選定する。ニュース記事リストの記事をブログ記事カテゴリに入れないこと
 - 該当する記事がないカテゴリはスキップしてよい
 - 英語記事のGoogle翻訳URLは https://translate.google.com/translate?sl=en&tl=ja&u={元のURL} の形式で生成する
 
-【記事リスト】
-${articleList}`;
+【ニュース記事リスト（🔥 Xで話題・🟠 Anthropic・🧠 モデル・技術・💬 その他 の4カテゴリに分類）】
+${articleList}
+
+【ブログ記事リスト（📝 ブログ記事カテゴリに全件使用）】
+${blogList || '（ブログ記事なし）'}`;
 }
 
 export function extractJson(raw: string): string {
@@ -120,14 +130,15 @@ export function parseResponse(text: string): SummaryResult {
 
 export async function summarizeArticles(
   articles: Article[],
-  config: Config
+  config: Config,
+  blogArticles?: Article[]
 ): Promise<SummaryResult> {
   const client = new Anthropic({ apiKey: config.anthropic.apiKey });
 
   const { dateStr } = todayWithDayJST();
   const moreUrl = `${config.pagesBaseUrl}/daily/${dateStr}/`;
 
-  const prompt = buildPrompt(articles, moreUrl);
+  const prompt = buildPrompt(articles, moreUrl, blogArticles);
 
   console.log(`[Claude] ${articles.length}件の記事を要約中...`);
 

@@ -41,6 +41,7 @@ function buildPrompt(articles: Article[], moreUrl: string, blogArticles?: Articl
 
   return `あなたはAI・テクノロジー分野の専門ニュースキュレーターです。
 以下の記事リストを読んで、5つのカテゴリに分類し、2つの出力を生成してください。
+必ず <SLACK>...</SLACK> と <ARTICLES_JSON>...</ARTICLES_JSON> の両方のタグを出力すること。
 
 【カテゴリ（この順序で出力）】
 1. 🔥 Xで話題 — SNS（特にX）でバズっているAI関連トピック
@@ -123,6 +124,7 @@ export function parseResponse(text: string): SummaryResult {
     }
   } else {
     console.warn('[Claude] ARTICLES_JSONタグが見つかりません');
+    console.warn('[Claude] レスポンス末尾:', text.slice(-300));
   }
 
   return { slackText, allArticles };
@@ -146,7 +148,7 @@ export async function summarizeArticles(
     () =>
       client.messages.create({
         model: config.anthropic.model,
-        max_tokens: 8192,
+        max_tokens: 16384,
         messages: [
           {
             role: 'user',

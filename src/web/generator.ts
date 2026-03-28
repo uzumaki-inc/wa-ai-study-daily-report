@@ -10,7 +10,7 @@ const CATEGORY_META: { key: string; emoji: string; label: string }[] = [
   { key: 'other', emoji: '💬', label: 'その他話題のニュース' },
 ];
 
-function safeUrl(url: string): string {
+export function safeUrl(url: string): string {
   return /^https?:\/\//.test(url) ? escapeHtml(url) : '#';
 }
 
@@ -20,13 +20,16 @@ function articleToHtml(article: CategoryArticle): string {
     article.lang === 'en'
       ? ` <a href="${safeUrl(`https://translate.google.com/translate?sl=en&tl=ja&u=${encodeURIComponent(article.url)}`)}">日本語で読む</a>`
       : '';
+  const summaryHtml = article.summary
+    ? `\n  <details><summary>要約を読む</summary><p>${escapeHtml(article.summary)}</p></details>`
+    : '';
   return `<li>
   <a href="${url}" target="_blank">${escapeHtml(article.title)}</a>
-  <span class="source">${escapeHtml(article.source)}${translateLink}</span>
+  <span class="source">${escapeHtml(article.source)}${translateLink}</span>${summaryHtml}
 </li>`;
 }
 
-function escapeHtml(text: string): string {
+export function escapeHtml(text: string): string {
   return text
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
@@ -63,6 +66,9 @@ function buildHtml(dateStr: string, articles: CategorizedArticles): string {
   li a:hover { text-decoration: underline; }
   .source { display: block; font-size: 0.85em; color: #666; margin-top: 2px; }
   .source a { color: #666; }
+  details { margin-top: 4px; }
+  details summary { font-size: 0.85em; color: #1a73e8; cursor: pointer; }
+  details p { margin: 4px 0 0; font-size: 0.9em; color: #555; line-height: 1.6; }
   footer { margin-top: 32px; font-size: 0.8em; color: #999; border-top: 1px solid #ddd; padding-top: 12px; }
 </style>
 </head>

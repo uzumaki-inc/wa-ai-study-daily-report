@@ -148,7 +148,7 @@ export async function summarizeArticles(
     () =>
       client.messages.create({
         model: config.anthropic.model,
-        max_tokens: 32768,
+        max_tokens: 16384,
         messages: [
           {
             role: 'user',

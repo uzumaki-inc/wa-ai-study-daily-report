@@ -148,7 +148,7 @@ export async function summarizeArticles(
     () =>
       client.messages.create({
         model: config.anthropic.model,
-        max_tokens: 16384,
+        max_tokens: 32768,
         messages: [
           {
             role: 'user',
@@ -158,6 +158,12 @@ export async function summarizeArticles(
       }),
     'Claude API'
   );
+
+  console.log(`[Claude] stop_reason: ${message.stop_reason}, output tokens: ${message.usage.output_tokens}`);
+
+  if (message.stop_reason === 'max_tokens') {
+    console.warn('[Claude] ⚠️ max_tokensに到達しました。出力が途中で切れている可能性があります');
+  }
 
   const textBlock = message.content.find((block) => block.type === 'text');
   if (!textBlock || textBlock.type !== 'text') {
